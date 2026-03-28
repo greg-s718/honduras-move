@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="HN Move">
+<meta name="theme-color" content="#f5f0e8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<title>Honduras Move · Manifest v5</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  /* Disposition colours — keep rich, just lightened backgrounds */
+  --keep:#1a5c38;   --keep-bg:#e6f4ec; --keep-bd:#7bbf97;
+  --sell:#8a2500;   --sell-bg:#fdeee8; --sell-bd:#d4856a;
+  --give:#2d2d7a;   --give-bg:#eceef8; --give-bd:#8888cc;
+  --donate:#7a4d00; --donate-bg:#fdf3e0;--donate-bd:#c49a40;
+  --toss:#444444;   --toss-bg:#f0f0f0; --toss-bd:#aaaaaa;
+
+  /* Light warm theme */
+  --bg:#f5f0e8;
+  --surface:#ffffff;
+  --card:#ffffff;
+  --border:#d6cfc4;
+  --border-strong:#a89e90;
+  --text:#2a2118;
+  --text-secondary:#5a4e42;
+  --muted:#8a7e72;
+  --accent:#2e7d4f;
+  --accent-hover:#245f3c;
+  --accent-light:#e6f4ec;
+  --input-bg:#ffffff;
+  --input-border:#b8afa4;
+  --shadow:rgba(80,60,40,0.10);
+  --shadow-sm:rgba(80,60,40,0.06);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'DM Mono',monospace;
+  background:var(--bg); color:var(--text);
+  display:flex; flex-direction:column;
+  padding-top:var(--safe-top);
+  padding-bottom:var(--safe-bot);
+  font-size:15px;
+}
+
+/* ══ TOAST ══ */
+#toast{
+  position:fixed; bottom:calc(76px + var(--safe-bot)); left:50%; transform:translateX(-50%) translateY(20px);
+  background:#2a2118; border:1px solid var(--accent); border-radius:20px;
+  padding:0.5rem 1.2rem; font-size:0.82rem; color:#ffffff;
+  opacity:0; transition:all 0.3s; pointer-events:none; z-index:999; white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,0.25);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ══ BOTTOM NAV ══ */
+#bottom-nav{
+  flex-shrink:0; display:flex; background:var(--surface);
+  border-top:2px solid var(--border);
+  padding:0.35rem 0 calc(0.35rem + var(--safe-bot));
+  box-shadow:0 -2px 12px var(--shadow);
+}
+.nav-btn{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+  background:none; border:none; cursor:pointer; font-family:'DM Mono',monospace;
+  padding:0.4rem 0.1rem; color:var(--muted); transition:color 0.2s;
+}
+.nav-btn.active{color:var(--accent);}
+.nav-btn .nav-icon{font-size:1.2rem; line-height:1;}
+.nav-btn .nav-label{font-size:0.52rem; letter-spacing:0.07em; text-transform:uppercase; font-weight:500;}
+
+/* ══ MAIN CONTENT ══ */
+#main-content{flex:1; overflow-y:auto; overflow-x:hidden;}
+
+/* ── Screen ── */
+.screen{display:none; min-height:100%; padding:1.25rem 1rem 2rem;}
+.screen.active{display:block;}
+
+/* ── Page header ── */
+.page-header{margin-bottom:1.4rem; padding-bottom:0.85rem; border-bottom:2px solid var(--border);}
+.page-header h2{font-family:'Lora',serif; font-size:1.5rem; font-weight:600; line-height:1.2; color:var(--text);}
+.page-header p{font-size:0.78rem; color:var(--muted); margin-top:0.3rem;}
+
+/* ── Card ── */
+.card{
+  background:var(--card); border:1.5px solid var(--border); border-radius:14px;
+  padding:1.5rem 1.25rem 1.25rem;
+  box-shadow:0 2px 12px var(--shadow-sm), 0 1px 3px var(--shadow);
+  animation:slideIn 0.3s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px) scale(0.99);}to{opacity:1;transform:none;}}
+.card-label{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.65rem;font-weight:500;}
+.card-question{font-family:'Lora',serif;font-size:1.15rem;line-height:1.5;margin-bottom:0.5rem;color:var(--text);}
+.card-hint{font-size:0.78rem;color:var(--text-secondary);line-height:1.65;margin-bottom:1.3rem;background:var(--bg);border-radius:8px;padding:0.6rem 0.75rem;border-left:3px solid var(--border-strong);}
+
+/* progress */
+#progress-wrap{display:flex;gap:6px;margin-bottom:1.2rem;}
+.prog-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all 0.3s;}
+.prog-dot.done{background:var(--accent);transform:scale(1.2);}
+.prog-dot.active{background:var(--text);transform:scale(1.35);}
+
+/* category badge */
+#category-badge{display:none;align-items:center;gap:0.4rem;font-size:0.7rem;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--text-secondary);margin-bottom:1rem;border:1.5px solid var(--border);
+  border-radius:20px;padding:0.3rem 0.75rem;width:fit-content;background:var(--surface);}
+#category-badge.visible{display:flex;}
+
+/* ── Answer Buttons ── */
+.btn-row{display:flex;flex-direction:column;gap:0.5rem;}
+.btn{
+  display:flex;flex-direction:column;padding:0.85rem 1rem;border-radius:10px;
+  border:1.5px solid var(--border);background:var(--surface);cursor:pointer;
+  font-family:'DM Mono',monospace;font-size:0.84rem;color:var(--text);
+  text-align:left;transition:all 0.18s;line-height:1.4;
+  box-shadow:0 1px 4px var(--shadow-sm);
+}
+.btn:active,.btn:hover{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.btn .btn-sub{font-size:0.7rem;color:var(--muted);margin-top:3px;}
+
+/* category grid */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+.cat-btn{
+  display:flex;flex-direction:column;align-items:flex-start;padding:1rem 0.85rem;
+  border-radius:12px;border:1.5px solid var(--border);background:var(--surface);
+  cursor:pointer;font-family:'DM Mono',monospace;color:var(--text);text-align:left;transition:all 0.18s;
+  box-shadow:0 1px 4px var(--shadow-sm);
+}
+.cat-btn:active,.cat-btn:hover{border-color:var(--accent);background:var(--accent-light);}
+.cat-btn .cat-icon{font-size:1.5rem;margin-bottom:0.4rem;}
+.cat-btn .cat-name{font-size:0.78rem;font-weight:500;line-height:1.3;color:var(--text);}
+.cat-btn .cat-desc{font-size:0.65rem;color:var(--muted);margin-top:3px;line-height:1.3;}
+
+/* item form */
+.item-form{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1.2rem;}
+.item-form .full{grid-column:1/-1;}
+.form-field label{display:block;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:0.3rem;font-weight:500;}
+.form-field input,.form-field select{
+  width:100%;background:var(--input-bg);border:1.5px solid var(--input-border);border-radius:8px;
+  padding:0.6rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.84rem;
+  color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;-webkit-appearance:none;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.06);
+}
+.form-field input::placeholder{color:var(--muted);opacity:0.7;}
+.form-field input:focus,.form-field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(46,125,79,0.12);}
+.form-field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a7e72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2rem;}
+.form-field select option{background:#fff;color:var(--text);}
+
+/* card footer */
+.card-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:1.2rem;padding-top:1rem;border-top:1.5px solid var(--border);gap:0.5rem;
+}
+.outcome-card .card-footer{border-top-color:currentColor;opacity:0.5;}
+.back-btn{font-size:0.75rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;transition:color 0.2s;padding:0.4rem 0;}
+.back-btn:disabled{opacity:0.25;cursor:default;}
+.back-btn:hover{color:var(--text);}
+.outcome-card .back-btn{color:inherit;}
+.restart-btn{font-size:0.75rem;background:none;border:1.5px solid var(--border-strong);border-radius:6px;padding:0.35rem 0.75rem;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text-secondary);transition:all 0.2s;}
+.restart-btn:active,.restart-btn:hover{color:var(--text);border-color:var(--text);background:var(--bg);}
+.outcome-card .restart-btn{color:inherit;border-color:currentColor;}
+.step-label{font-size:0.68rem;color:var(--muted);letter-spacing:0.06em;}
+
+/* outcome */
+.outcome-card{border-radius:14px;padding:1.5rem 1.25rem;animation:slideIn 0.3s cubic-bezier(0.22,1,0.36,1) both;box-shadow:0 4px 20px var(--shadow);}
+.oc-keep  {background:var(--keep-bg); border:2px solid var(--keep-bd); color:var(--keep);}
+.oc-sell  {background:var(--sell-bg); border:2px solid var(--sell-bd); color:var(--sell);}
+.oc-give  {background:var(--give-bg); border:2px solid var(--give-bd); color:var(--give);}
+.oc-donate{background:var(--donate-bg);border:2px solid var(--donate-bd);color:var(--donate);}
+.oc-toss  {background:var(--toss-bg); border:2px solid var(--toss-bd); color:var(--toss);}
+.outcome-icon{font-size:2.4rem;margin-bottom:0.5rem;display:block;}
+.outcome-verdict{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;opacity:0.7;margin-bottom:0.35rem;font-weight:500;}
+.outcome-title{font-family:'Lora',serif;font-size:1.4rem;font-weight:600;margin-bottom:0.5rem;}
+.outcome-body{font-size:0.82rem;line-height:1.7;margin-bottom:1rem;opacity:0.9;}
+.tips-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.65;margin-bottom:0.45rem;font-weight:500;}
+.tips-list{list-style:none;display:flex;flex-direction:column;gap:0.35rem;margin-bottom:1.1rem;}
+.tips-list li{font-size:0.78rem;line-height:1.55;display:flex;gap:0.5rem;opacity:0.88;}
+.tips-list li::before{content:'›';flex-shrink:0;font-size:1rem;}
+
+/* ══ MANIFEST SCREEN ══ */
+.manifest-toolbar{
+  display:flex;gap:0.45rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;
+}
+.mv-tab{font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:0.05em;padding:0.4rem 0.9rem;border-radius:7px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;font-weight:500;}
+.mv-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.export-btn{font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.04em;padding:0.4rem 0.85rem;border-radius:7px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;transition:all 0.2s;white-space:nowrap;font-weight:500;}
+.export-btn:active,.export-btn:hover{background:var(--accent-hover);border-color:var(--accent-hover);}
+.spacer{flex:1;}
+
+.manifest-table-wrap{overflow-x:auto;border-radius:10px;border:1.5px solid var(--border);margin-bottom:0.75rem;box-shadow:0 1px 6px var(--shadow-sm);}
+.manifest-table{width:100%;border-collapse:collapse;font-size:0.78rem;}
+.manifest-table th{background:var(--bg);padding:0.6rem 0.75rem;text-align:left;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);border-bottom:1.5px solid var(--border);white-space:nowrap;font-weight:600;}
+.manifest-table td{padding:0.7rem 0.75rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text);}
+.manifest-table tr:last-child td{border-bottom:none;}
+.manifest-table tr:hover td{background:#faf7f3;}
+.badge{display:inline-block;font-size:0.62rem;padding:0.2rem 0.55rem;border-radius:10px;font-weight:600;letter-spacing:0.04em;white-space:nowrap;}
+.badge-keep  {background:var(--keep-bg); color:var(--keep);  border:1px solid var(--keep-bd);}
+.badge-sell  {background:var(--sell-bg); color:var(--sell);  border:1px solid var(--sell-bd);}
+.badge-give  {background:var(--give-bg); color:var(--give);  border:1px solid var(--give-bd);}
+.badge-donate{background:var(--donate-bg);color:var(--donate);border:1px solid var(--donate-bd);}
+.badge-toss  {background:var(--toss-bg); color:var(--toss);  border:1px solid var(--toss-bd);}
+.manifest-footer{font-size:0.78rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;padding-top:0.5rem;}
+.manifest-footer strong{color:var(--text);}
+.row-del{background:none;border:none;cursor:pointer;font-size:0.9rem;opacity:0.35;padding:0.2rem 0.3rem;transition:opacity 0.2s;color:#c0392b;}
+.row-del:hover{opacity:1;}
+.row-edit{background:none;border:none;cursor:pointer;font-size:0.85rem;opacity:0.4;padding:0.2rem 0.3rem;transition:opacity 0.2s;color:var(--accent);}
+.row-edit:hover{opacity:1;}
+
+/* ══ EDIT MODAL ══ */
+.edit-modal-backdrop{position:fixed;inset:0;background:rgba(42,33,24,0.55);z-index:500;display:flex;align-items:flex-end;justify-content:center;padding:0 0 var(--safe-bot);}
+@media(min-width:600px){.edit-modal-backdrop{align-items:center;padding:1rem;}}
+.edit-modal{background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:1.5rem 1.25rem 2rem;box-shadow:0 -4px 32px rgba(0,0,0,0.18);}
+@media(min-width:600px){.edit-modal{border-radius:18px;}}
+.edit-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.edit-modal-header h3{font-family:'Lora',serif;font-size:1.15rem;font-weight:600;color:var(--text);}
+.edit-modal-close{background:var(--bg);border:1.5px solid var(--border);border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all 0.2s;flex-shrink:0;}
+.edit-modal-close:hover{border-color:var(--border-strong);color:var(--text);}
+.edit-form{display:flex;flex-direction:column;gap:0.75rem;}
+.edit-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+.edit-form .form-row.full{grid-template-columns:1fr;}
+.edit-save-btn{width:100%;padding:0.9rem;border-radius:10px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:0.88rem;font-weight:600;letter-spacing:0.04em;transition:all 0.2s;margin-top:0.25rem;box-shadow:0 2px 8px rgba(46,125,79,0.3);}
+.edit-save-btn:hover{background:var(--accent-hover);}
+
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);}
+.empty-state .empty-icon{font-size:2.8rem;margin-bottom:0.75rem;display:block;}
+.empty-state p{font-size:0.85rem;line-height:1.6;}
+
+/* ══ MANUAL ENTRY SCREEN ══ */
+.manual-form{display:flex;flex-direction:column;gap:0.75rem;}
+.manual-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+.manual-form .form-row.full{grid-template-columns:1fr;}
+.disposition-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.45rem;margin-top:0.15rem;}
+.disp-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:0.7rem 0.3rem;border-radius:10px;border:2px solid var(--border);background:var(--surface);
+  cursor:pointer;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);
+  text-align:center;transition:all 0.18s;line-height:1.2;font-weight:500;
+  box-shadow:0 1px 3px var(--shadow-sm);
+}
+.disp-btn .d-icon{font-size:1.2rem;}
+.disp-btn:hover{border-color:var(--border-strong);color:var(--text);}
+.disp-btn.selected-keep  {border-color:var(--keep);   background:var(--keep-bg);  color:var(--keep);  box-shadow:0 0 0 3px rgba(26,92,56,0.15);}
+.disp-btn.selected-sell  {border-color:var(--sell);   background:var(--sell-bg);  color:var(--sell);  box-shadow:0 0 0 3px rgba(138,37,0,0.12);}
+.disp-btn.selected-give  {border-color:var(--give);   background:var(--give-bg);  color:var(--give);  box-shadow:0 0 0 3px rgba(45,45,122,0.12);}
+.disp-btn.selected-donate{border-color:var(--donate); background:var(--donate-bg);color:var(--donate);box-shadow:0 0 0 3px rgba(122,77,0,0.12);}
+.disp-btn.selected-toss  {border-color:var(--toss);   background:var(--toss-bg);  color:var(--toss);  box-shadow:0 0 0 3px rgba(68,68,68,0.12);}
+.add-btn{
+  width:100%;padding:0.9rem;border-radius:10px;background:var(--accent);color:#fff;
+  border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:0.88rem;font-weight:600;
+  letter-spacing:0.04em;transition:all 0.2s;margin-top:0.5rem;
+  box-shadow:0 2px 8px rgba(46,125,79,0.3);
+}
+.add-btn:active,.add-btn:hover{background:var(--accent-hover);box-shadow:0 3px 12px rgba(46,125,79,0.35);}
+.add-btn:disabled{opacity:0.4;cursor:default;box-shadow:none;}
+
+/* ══ SETTINGS SCREEN ══ */
+.settings-section{margin-bottom:2rem;}
+.settings-title{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--border);font-weight:600;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 0;border-bottom:1px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-row-info .sr-label{font-size:0.85rem;margin-bottom:3px;color:var(--text);font-weight:500;}
+.settings-row-info .sr-sub{font-size:0.7rem;color:var(--muted);}
+.settings-action{font-family:'DM Mono',monospace;font-size:0.75rem;padding:0.4rem 1rem;border-radius:7px;border:1.5px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;transition:all 0.2s;white-space:nowrap;flex-shrink:0;font-weight:500;}
+.settings-action:active,.settings-action:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+.settings-action.danger:hover{border-color:#c0392b;color:#c0392b;background:#fdecea;}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-top:0.5rem;}
+.stat-card{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:0.85rem;text-align:center;}
+.stat-num{font-family:'Lora',serif;font-size:1.5rem;font-weight:600;}
+.stat-lbl{font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:3px;font-weight:500;}
+.stat-card.s-keep  .stat-num{color:var(--keep);}
+.stat-card.s-sell  .stat-num{color:var(--sell);}
+.stat-card.s-give  .stat-num{color:var(--give);}
+.stat-card.s-donate .stat-num{color:var(--donate);}
+.stat-card.s-toss  .stat-num{color:var(--toss);}
+
+/* ══ PRINT ══ */
+@media print{
+  body{background:#fff!important;color:#000!important;overflow:visible;height:auto;}
+  #bottom-nav,#toast{display:none!important;}
+  #main-content{overflow:visible;height:auto;}
+  .screen{display:none!important;}
+  #manifest-screen{display:block!important;padding:0;}
+  .manifest-toolbar,.row-del{display:none!important;}
+  .print-header{display:block!important;margin-bottom:1rem;}
+  .print-header h1{font-size:16pt;font-family:Georgia,serif;margin-bottom:4pt;}
+  .print-header p{font-size:9pt;color:#666;}
+  .manifest-table-wrap{border:1px solid #ccc;border-radius:0;}
+  .manifest-table th{background:#f5f5f5!important;color:#333!important;}
+  .manifest-table td{color:#000!important;border-bottom:1px solid #eee;}
+  .badge{border:1px solid #999!important;background:#f9f9f9!important;color:#333!important;}
+  .manifest-footer{color:#333!important;}
+}
+.print-header{display:none;}
+
+/* ══ RESPONSIVE ══ */
+@media(min-width:600px){
+  .cat-grid{grid-template-columns:repeat(3,1fr);}
+  .disposition-grid{grid-template-columns:repeat(5,1fr);}
+  .item-form{grid-template-columns:repeat(4,1fr);}
+  .item-form .full{grid-column:1/-1;}
+}
+
+/* ══ PHOTO CAPTURE ══ */
+.photo-thumb{width:56px;height:56px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;box-shadow:0 1px 4px var(--shadow-sm);}
+.photo-placeholder{width:56px;height:56px;border-radius:8px;border:2px dashed var(--input-border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;flex-shrink:0;background:var(--bg);transition:all 0.2s;}
+.photo-placeholder:hover{border-color:var(--accent);background:var(--accent-light);}
+.manifest-table td.photo-cell{padding:0.4rem 0.5rem;width:64px;}
+.photo-modal{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.photo-modal img{max-width:100%;max-height:85vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+.photo-modal-close{position:absolute;top:1rem;right:1rem;background:#fff;border:1px solid var(--border);color:var(--text);border-radius:50%;width:38px;height:38px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+
+/* ══ VOLUME ESTIMATOR ══ */
+#volume-screen .vol-summary{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:1.35rem;margin-bottom:1rem;box-shadow:0 2px 10px var(--shadow-sm);}
+.vol-gauge-wrap{margin:0.75rem 0;}
+.vol-gauge-bg{height:20px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border);overflow:hidden;}
+.vol-gauge-fill{height:100%;border-radius:9px;transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1);}
+.vol-gauge-fill.ok{background:var(--accent);}
+.vol-gauge-fill.warn{background:#c49a40;}
+.vol-gauge-fill.over{background:#c0392b;}
+.vol-numbers{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin-top:0.35rem;font-weight:500;}
+.vol-total{font-family:'Lora',serif;font-size:2.2rem;font-weight:600;color:var(--accent);}
+.vol-total-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.vol-item-row{display:flex;align-items:center;gap:0.6rem;padding:0.65rem 0;border-bottom:1px solid var(--border);background:var(--surface);}
+.vol-item-row:last-child{border-bottom:none;}
+.vol-item-name{flex:1;font-size:0.8rem;color:var(--text);}
+.vol-item-badge{font-size:0.65rem;color:var(--muted);}
+.vol-input{width:75px;background:var(--input-bg);border:1.5px solid var(--input-border);border-radius:7px;padding:0.35rem 0.5rem;font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text);outline:none;text-align:right;transition:border-color 0.2s;}
+.vol-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(46,125,79,0.12);}
+.vol-unit{font-size:0.65rem;color:var(--muted);white-space:nowrap;font-weight:500;}
+.vol-section-title{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem;font-weight:600;}
+
+/* ══ SAR REPORT ══ */
+#sar-screen .sar-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:1.35rem;margin-bottom:0.85rem;box-shadow:0 2px 10px var(--shadow-sm);}
+.sar-card h3{font-family:'Lora',serif;font-size:1.05rem;margin-bottom:0.65rem;color:var(--text);}
+.sar-field{display:flex;flex-direction:column;gap:0.25rem;margin-bottom:0.7rem;}
+.sar-field label{font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;}
+.sar-field input,.sar-field select{background:var(--input-bg);border:1.5px solid var(--input-border);border-radius:8px;padding:0.6rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.84rem;color:var(--text);outline:none;transition:all 0.2s;width:100%;}
+.sar-field input:focus,.sar-field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(46,125,79,0.12);}
+
+@media print{#sar-print-area{display:block!important;}}
+#sar-print-area{display:none;font-family:Arial,sans-serif;font-size:9.5pt;line-height:1.5;}
+#sar-print-area .bilingual-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+#sar-print-area .bilingual-wrap pre{font-family:'Courier New',monospace;font-size:8.5pt;line-height:1.7;white-space:pre-wrap;margin:0;}
+#sar-print-area .lang-label{font-size:7pt;letter-spacing:0.12em;text-transform:uppercase;color:#666;margin-bottom:4pt;font-family:Arial,sans-serif;}
+#sar-print-area .divider{border:none;border-top:1px solid #ccc;margin:10pt 0;}
+.sar-preview-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.75rem;}
+@media(max-width:599px){.sar-preview-wrap{grid-template-columns:1fr;}}
+.sar-preview-lang{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:0.85rem;}
+.sar-preview-lang .lang-tag{font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:0.4rem;}
+.sar-preview{background:transparent;border:none;border-radius:0;padding:0;font-size:0.68rem;line-height:1.8;white-space:pre-wrap;font-family:'DM Mono',monospace;color:var(--text-secondary);max-height:280px;overflow-y:auto;margin-top:0;}
+
+/* ══ BOX MANAGER ══ */
+.box-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;margin-bottom:0.85rem;box-shadow:0 2px 8px var(--shadow-sm);overflow:hidden;}
+.box-card-header{display:flex;align-items:center;gap:0.65rem;padding:0.9rem 1rem;cursor:pointer;transition:background 0.15s;}
+.box-card-header:hover{background:#faf7f3;}
+.box-number{font-family:'Lora',serif;font-size:1.3rem;font-weight:700;color:var(--accent);min-width:2rem;text-align:center;}
+.box-header-info{flex:1;}
+.box-header-name{font-size:0.88rem;font-weight:600;color:var(--text);}
+.box-header-room{font-size:0.7rem;color:var(--muted);margin-top:1px;}
+.box-header-count{font-size:0.7rem;color:var(--muted);text-align:right;white-space:nowrap;}
+.box-chevron{font-size:0.75rem;color:var(--muted);transition:transform 0.2s;flex-shrink:0;}
+.box-chevron.open{transform:rotate(90deg);}
+.box-card-body{border-top:1px solid var(--border);padding:0.75rem 1rem;}
+.box-item-row{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;}
+.box-item-row:last-child{border-bottom:none;}
+.box-item-name{flex:1;color:var(--text);}
+.box-item-qty{font-size:0.7rem;color:var(--muted);white-space:nowrap;}
+.box-item-remove{background:none;border:none;cursor:pointer;font-size:0.8rem;color:#c0392b;opacity:0.4;padding:0.15rem 0.3rem;transition:opacity 0.2s;}
+.box-item-remove:hover{opacity:1;}
+.box-actions{display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;}
+.box-action-btn{font-family:'DM Mono',monospace;font-size:0.7rem;padding:0.35rem 0.75rem;border-radius:7px;border:1.5px solid var(--border);background:var(--bg);color:var(--text-secondary);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.box-action-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+.box-action-btn.danger:hover{border-color:#c0392b;color:#c0392b;background:#fdecea;}
+.box-qr-wrap{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0 0.25rem;}
+.box-qr-wrap canvas{border-radius:4px;background:#fff;padding:3px;border:1px solid var(--border);flex-shrink:0;}
+
+.new-box-btn{width:100%;padding:0.85rem;border-radius:12px;border:2px dashed var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.82rem;cursor:pointer;transition:all 0.2s;margin-top:0.25rem;}
+.new-box-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+
+.unassigned-item{display:flex;align-items:center;gap:0.65rem;padding:0.65rem 0.85rem;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;margin-bottom:0.5rem;box-shadow:0 1px 4px var(--shadow-sm);}
+.unassigned-item-info{flex:1;}
+.unassigned-item-name{font-size:0.82rem;font-weight:500;color:var(--text);}
+.unassigned-item-meta{font-size:0.68rem;color:var(--muted);margin-top:2px;}
+.assign-select{font-family:'DM Mono',monospace;font-size:0.72rem;padding:0.3rem 0.5rem;border-radius:6px;border:1.5px solid var(--input-border);background:var(--input-bg);color:var(--text);outline:none;max-width:130px;}
+.assign-select:focus{border-color:var(--accent);}
+
+/* Master packing list */
+.master-box-section{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;margin-bottom:1rem;overflow:hidden;box-shadow:0 1px 6px var(--shadow-sm);}
+.master-box-header{display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1rem;background:var(--bg);border-bottom:1.5px solid var(--border);}
+.master-box-title{font-family:'Lora',serif;font-size:1rem;font-weight:600;color:var(--text);}
+.master-box-room{font-size:0.72rem;color:var(--accent);font-weight:600;background:var(--accent-light);padding:0.2rem 0.6rem;border-radius:12px;border:1px solid var(--keep-bd);}
+.master-item-list{padding:0.5rem 1rem;}
+.master-item-line{display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem;color:var(--text);}
+.master-item-line:last-child{border-bottom:none;}
+.master-item-val{font-size:0.7rem;color:var(--muted);}
+
+/* Print styles for packing list */
+@media print{
+  .qr-print-sheet{display:block!important;}
+  body,#main-content,.screen{display:block!important;overflow:visible!important;height:auto!important;}
+  #bottom-nav,#toast,.no-print{display:none!important;}
+  .qr-print-sheet{padding:0.4in;}
+  .print-box-block{page-break-inside:avoid;margin-bottom:24pt;border:1.5pt solid #ccc;border-radius:6pt;overflow:hidden;}
+  .print-box-header{background:#f0f0f0!important;padding:8pt 10pt;display:flex;align-items:center;justify-content:space-between;}
+  .print-box-num{font-size:16pt;font-weight:700;font-family:Georgia,serif;color:#1a5c38;}
+  .print-box-name{font-size:11pt;font-weight:600;}
+  .print-box-room{font-size:9pt;color:#555;}
+  .print-room-badge{font-size:10pt;font-weight:700;color:#fff;background:#1a5c38!important;padding:3pt 8pt;border-radius:4pt;}
+  .print-item-table{width:100%;border-collapse:collapse;font-size:9pt;}
+  .print-item-table td{padding:4pt 8pt;border-bottom:0.5pt solid #eee;}
+  .print-item-table tr:last-child td{border-bottom:none;}
+  .print-qr-row{display:flex;align-items:center;gap:10pt;padding:6pt 10pt;border-top:1pt solid #ccc;background:#fafafa!important;}
+}
+.qr-print-sheet{display:none;}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ══ MAIN CONTENT ══ -->
+<div id="main-content">
+
+  <!-- TREE SCREEN -->
+  <div id="tree-screen" class="screen active">
+    <div id="progress-wrap"></div>
+    <div id="category-badge"></div>
+    <div id="card-wrap"></div>
+  </div>
+
+  <!-- MANIFEST SCREEN -->
+  <div id="manifest-screen" class="screen">
+    <div class="print-header">
+      <h1>Honduras Relocation — Shipping Manifest</h1>
+      <p>Destination: Valle de Ángeles, Honduras &nbsp;|&nbsp; Prepared: <span id="print-date"></span></p>
+    </div>
+    <div class="page-header no-print">
+      <h2>Manifest</h2>
+      <p>Honduras Relocation · Valle de Ángeles</p>
+    </div>
+    <div class="manifest-toolbar no-print">
+      <button class="mv-tab active" onclick="switchManifestTab('keep')" id="tab-keep">🧳 Ship</button>
+      <button class="mv-tab" onclick="switchManifestTab('all')" id="tab-all">📋 All</button>
+      <div class="spacer"></div>
+      <button class="export-btn" onclick="exportCSV()">⬇ CSV</button>
+      <button class="export-btn" onclick="exportPrint()">🖨 PDF</button>
+    </div>
+    <div id="manifest-content"></div>
+  </div>
+
+  <!-- MANUAL ENTRY SCREEN -->
+  <div id="manual-screen" class="screen">
+    <div class="page-header">
+      <h2>Add Item</h2>
+      <p>Log an item directly without the decision tree</p>
+    </div>
+    <div class="card">
+      <div class="manual-form" id="manual-form">
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Item Description *</label>
+            <input type="text" id="m-name" placeholder="e.g. Cast iron skillet" maxlength="80">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Quantity</label>
+            <input type="number" id="m-qty" min="1" value="1" placeholder="1">
+          </div>
+          <div class="form-field">
+            <label>Est. Value (USD)</label>
+            <input type="text" id="m-value" placeholder="e.g. 45" maxlength="12">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Country of Origin</label>
+            <input type="text" id="m-origin" placeholder="United States" maxlength="50">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Category</label>
+            <select id="m-cat">
+              <option value="">— select —</option>
+              <option value="tools">🔧 Tools & Power Equipment</option>
+              <option value="kitchen">🍳 Cookware, Dishes & Kitchen</option>
+              <option value="clothing">👕 Clothing & Linens</option>
+              <option value="electronics">📷 Electronics & Cameras</option>
+              <option value="furniture">🪑 Furniture & Large Items</option>
+              <option value="books">📚 Books, Media & Office</option>
+              <option value="other">📦 Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Notes (optional)</label>
+            <input type="text" id="m-notes" placeholder="Any additional notes" maxlength="120">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Disposition *</label>
+            <div class="disposition-grid" id="disp-grid">
+              <button class="disp-btn" data-d="keep"  onclick="selectDisp('keep')">  <span class="d-icon">🧳</span>Keep</button>
+              <button class="disp-btn" data-d="sell"  onclick="selectDisp('sell')">  <span class="d-icon">💰</span>Sell</button>
+              <button class="disp-btn" data-d="give"  onclick="selectDisp('give')">  <span class="d-icon">🤝</span>Give</button>
+              <button class="disp-btn" data-d="donate"onclick="selectDisp('donate')"><span class="d-icon">❤️</span>Donate</button>
+              <button class="disp-btn" data-d="toss"  onclick="selectDisp('toss')">  <span class="d-icon">🗑️</span>Toss</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Photo (optional)</label>
+            <div style="display:flex;align-items:center;gap:0.65rem;margin-top:0.25rem;">
+              <div class="photo-placeholder" id="m-photo-thumb" onclick="document.getElementById('m-photo-input').click()" title="Tap to add photo">📷</div>
+              <span style="font-size:0.65rem;color:var(--muted);">Tap to capture or choose image</span>
+            </div>
+            <input type="file" id="m-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(event)">
+            <input type="hidden" id="m-photo-data" value="">
+          </div>
+        </div>
+        <button class="add-btn" id="add-manual-btn" onclick="addManualItem()" disabled>Add to Log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS SCREEN -->
+  <div id="settings-screen" class="screen">
+    <div class="page-header">
+      <h2>Settings & Data</h2>
+      <p>Manage your manifest data</p>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Summary</div>
+      <div class="stat-grid" id="stat-grid"></div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Google Sheets Sync</div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Script URL</div>
+          <div class="sr-sub">Paste your Apps Script Web App URL once</div>
+        </div>
+        <button class="settings-action" onclick="promptScriptURL()">Set URL</button>
+      </div>
+      <div class="settings-row" id="sync-url-row" style="display:none">
+        <div class="settings-row-info">
+          <div class="sr-label" style="font-size:0.65rem;word-break:break-all" id="sync-url-display">—</div>
+          <div class="sr-sub">Connected sheet</div>
+        </div>
+        <button class="settings-action danger" onclick="clearScriptURL()">Remove</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Push to Sheet</div>
+          <div class="sr-sub">Send all local items to Google Sheets</div>
+        </div>
+        <button class="settings-action" onclick="syncPush()">Push</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Pull from Sheet</div>
+          <div class="sr-sub">Merge sheet items into this device</div>
+        </div>
+        <button class="settings-action" onclick="syncPull()">Pull</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Data Management</div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Export Backup (JSON)</div>
+          <div class="sr-sub">Save a full backup of all logged items</div>
+        </div>
+        <button class="settings-action" onclick="exportJSON()">Export</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Import Backup (JSON)</div>
+          <div class="sr-sub">Restore or merge from a backup file</div>
+        </div>
+        <button class="settings-action" onclick="document.getElementById('json-import-input').click()">Import</button>
+      </div>
+      <input type="file" id="json-import-input" accept=".json" style="display:none" onchange="importJSON(event)">
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Export CSV</div>
+          <div class="sr-sub">All items — for Excel or Google Sheets</div>
+        </div>
+        <button class="settings-action" onclick="exportCSVAll()">Export</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Storage</div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Auto-save</div>
+          <div class="sr-sub">Data saved automatically to this device</div>
+        </div>
+        <span style="font-size:0.7rem;color:var(--accent)">✓ On</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Items stored</div>
+          <div class="sr-sub" id="storage-count">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Danger Zone</div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="sr-label">Clear All Data</div>
+          <div class="sr-sub">Permanently delete all logged items</div>
+        </div>
+        <button class="settings-action danger" onclick="clearAllData()">Clear</button>
+      </div>
+    </div>
+
+    <div style="font-size:0.62rem;color:var(--muted);text-align:center;margin-top:1rem;line-height:1.6;">
+      Honduras Move Manifest · v5.0<br>
+      Data stored locally on this device<br>
+      Use Google Sheets Sync to share between devices
+    </div>
+  </div>
+
+  <!-- VOLUME ESTIMATOR SCREEN -->
+  <div id="volume-screen" class="screen">
+    <div class="page-header">
+      <h2>Container Volume</h2>
+      <p>Estimate how your Keep items fill the 20-foot container</p>
+    </div>
+    <div class="vol-summary" id="vol-summary">
+      <div class="vol-total-label">Estimated Used</div>
+      <div style="display:flex;align-items:baseline;gap:0.4rem;margin:0.25rem 0;">
+        <span class="vol-total" id="vol-used-num">0</span>
+        <span style="font-size:0.8rem;color:var(--muted);">ft³ of 1,169 ft³</span>
+      </div>
+      <div class="vol-gauge-wrap">
+        <div class="vol-gauge-bg"><div class="vol-gauge-fill ok" id="vol-gauge" style="width:0%"></div></div>
+        <div class="vol-numbers"><span>0%</span><span id="vol-pct-label">0% used</span><span>100%</span></div>
+      </div>
+      <div style="font-size:0.65rem;color:var(--muted);margin-top:0.25rem;">20-ft container interior: approx. 1,169 ft³ usable volume</div>
+    </div>
+    <div class="vol-section-title">Keep Items — Enter Volume Estimate</div>
+    <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.75rem;">Enter the estimated cubic feet for each item. Tip: L×W×H in inches ÷ 1728 = ft³</div>
+    <div id="vol-items-list"></div>
+  </div>
+
+  <!-- SAR CUSTOMS REPORT SCREEN -->
+  <div id="sar-screen" class="screen">
+    <div class="page-header">
+      <h2>SAR Customs Report</h2>
+      <p>Honduran customs declaration — Menaje de Casa</p>
+    </div>
+    <div class="sar-card">
+      <h3>Declarant Information</h3>
+      <div class="sar-field"><label>Full Name</label><input type="text" id="sar-name" placeholder="Greg &amp; Reyna" maxlength="80"></div>
+      <div class="sar-field"><label>Passport / ID Number</label><input type="text" id="sar-passport" placeholder="Passport number" maxlength="30"></div>
+      <div class="sar-field"><label>Destination Address (Honduras)</label><input type="text" id="sar-address" placeholder="Valle de Ángeles, Francisco Morazán" maxlength="120"></div>
+      <div class="sar-field"><label>Port of Entry</label>
+        <select id="sar-port">
+          <option value="Puerto Cortés">Puerto Cortés (sea freight)</option>
+          <option value="Puerto de San Lorenzo">Puerto de San Lorenzo (sea freight)</option>
+          <option value="Toncontín / TGU">Toncontín Airport — Tegucigalpa</option>
+          <option value="San Pedro Sula / SAP">Ramón Villeda Morales — San Pedro Sula</option>
+        </select>
+      </div>
+      <div class="sar-field"><label>Declaration Date</label><input type="date" id="sar-date"></div>
+    </div>
+    <div class="sar-card">
+      <h3>Vista Previa / Report Preview</h3>
+      <div class="sar-preview-wrap">
+        <div class="sar-preview-lang">
+          <div class="lang-tag">🇭🇳 Español</div>
+          <div class="sar-preview" id="sar-preview-es">Complete los campos arriba para generar el reporte.</div>
+        </div>
+        <div class="sar-preview-lang">
+          <div class="lang-tag">🇺🇸 English</div>
+          <div class="sar-preview" id="sar-preview-en">Fill in the fields above to generate the report.</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+      <button class="settings-action" style="flex:1" onclick="copySAR()">📋 Copy Text</button>
+      <button class="settings-action" style="flex:1" onclick="printSAR()">🖨 Print / PDF</button>
+    </div>
+    <div id="sar-print-area"></div>
+  </div>
+
+  <!-- QR BOX LABELS SCREEN -->
+  <div id="qr-screen" class="screen">
+    <div class="page-header">
+      <h2>Box Manager</h2>
+      <p>Create boxes, assign rooms, pack items, print labels</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+      <button class="mv-tab active" onclick="switchQRView('boxes')" id="qr-tab-boxes">🗃 Boxes</button>
+      <button class="mv-tab" onclick="switchQRView('unassigned')" id="qr-tab-unassigned">📦 Unassigned</button>
+      <button class="mv-tab" onclick="switchQRView('masterlist')" id="qr-tab-masterlist">📋 Master List</button>
+      <div class="spacer"></div>
+      <button class="export-btn" onclick="printPackingList()">🖨 Print</button>
+    </div>
+    <div id="qr-content"></div>
+  </div>
+
+</div><!-- end main-content -->
+
+<!-- ══ BOTTOM NAV ══ -->
+<nav id="bottom-nav">
+  <button class="nav-btn active" onclick="navTo('tree')" id="nav-tree">
+    <span class="nav-icon">🌳</span><span class="nav-label">Evaluate</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('manifest')" id="nav-manifest">
+    <span class="nav-icon">📋</span><span class="nav-label">Manifest</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('manual')" id="nav-manual">
+    <span class="nav-icon">✏️</span><span class="nav-label">Add Item</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('volume')" id="nav-volume">
+    <span class="nav-icon">📦</span><span class="nav-label">Volume</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('sar')" id="nav-sar">
+    <span class="nav-icon">📄</span><span class="nav-label">Customs</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('qr')" id="nav-qr">
+    <span class="nav-icon">🏷</span><span class="nav-label">Labels</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('settings')" id="nav-settings">
+    <span class="nav-icon">⚙️</span><span class="nav-label">Data</span>
+  </button>
+</nav>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════
+//  TREE DATA
+// ═══════════════════════════════════════════════════════════
+const OUTCOMES={
+  keep:  {category:'keep',  icon:'🧳',title:'Take to Honduras',cls:'oc-keep',
+    body:'Earns its place in the container — functional, needed, worth the space.',
+    tips:['Tag for the container manifest','Note in duty-free household goods inventory','Pack for tropical humidity — use silica gel','Keep receipt if electronics']},
+  sell:  {category:'sell',  icon:'💰',title:'Sell It',cls:'oc-sell',
+    body:'Real value here — turn it into cash for the move.',
+    tips:['Facebook Marketplace / OfferUp for local sales','eBay for high-value or shippable items','3-week deadline then drop price or donate','Garage/estate sale for volume clearance']},
+  give:  {category:'give',  icon:'🤝',title:'Give Away',cls:'oc-give',
+    body:'Someone in your life would genuinely benefit.',
+    tips:['Family, friends, coworkers, church contacts','Post in church community board or NextDoor','Ministry contacts who might need it']},
+  donate:{category:'donate',icon:'❤️',title:'Donate',cls:'oc-donate',
+    body:'Still has useful life — let a charity put it to work.',
+    tips:['Goodwill / Salvation Army — general goods','Habitat ReStore — tools, hardware, appliances','Local church drives or community pantries','Get donation receipt for taxes']},
+  toss:  {category:'toss',  icon:'🗑️',title:'Throw Away',cls:'oc-toss',
+    body:'Run its course. Letting go is the right call.',
+    tips:['Check recyclability first','Electronics: Best Buy / Staples e-waste','Hazardous: SB County HazWaste program']},
+};
+
+const SHARED={
+  resale_check:{label:'Resale value',question:'Does it have meaningful resale value?',hint:'Good condition, worth $25+? Think Facebook Marketplace.',
+    options:[{text:'Yes — sellable',next:'sell_or_give'},{text:'No — low value or worn',next:'still_useful'}]},
+  sell_or_give:{label:'Who gets the value?',question:'Sell for cash, or give to someone you know?',hint:'Selling funds the move. Giving builds relationships.',
+    options:[{text:'Sell it',sub:'Recover cash for the move',next:'__sell'},{text:'Give to a specific person',sub:'Friend, family, or church contact',next:'__give'}]},
+  still_useful:{label:'Still useful?',question:'Could someone else genuinely use this?',hint:'Usable goods welcome at most charities. Broken or hazardous are not.',
+    options:[{text:'Yes — still has useful life',next:'donate_or_give'},{text:'No — broken, stained, or unsafe',next:'__toss'}]},
+  donate_or_give:{label:'Charity or person?',question:'A specific person, or a charity?',hint:'Neighbors, church family vs. Goodwill, Habitat ReStore, shelters.',
+    options:[{text:'A specific person',next:'__give'},{text:'Charity or ministry',next:'__donate'}]},
+};
+
+const CATEGORIES={
+  tools:{icon:'🔧',name:'Tools & Power Equipment',desc:'Hand tools, power tools',
+    start:{label:'Power source',question:'Battery (Makita 18V) or corded?',hint:'You\'re invested in Makita 18V. Corded tools need 110V compatibility with Honduras.',
+      options:[{text:'Makita 18V battery',sub:'Works with your batteries',next:'tools_makita'},{text:'Corded — 110V compatible',next:'tools_need'},{text:'Corded — 220V or dual voltage',next:'tools_220v'},{text:'Hand tool / non-electric',next:'tools_need'}]},
+    nodes:{
+      tools_makita:{label:'Makita ecosystem',question:'Unique tool, or duplicate?',hint:'Keep the best; sell the redundant one.',options:[{text:'Unique — nothing else does this job',next:'tools_need'},{text:'I have a duplicate',next:'__sell'}]},
+      tools_220v:{label:'Voltage check',question:'Worth adapting for Honduras?',options:[{text:'Yes — worth it',next:'tools_need'},{text:'Too much hassle',next:'__sell'}]},
+      tools_need:{label:'Honduras need',question:'Actively use it for property work or ministry in Valle de Ángeles?',options:[{text:'Yes — concrete use planned',next:'tools_source'},{text:'Maybe someday',next:'tools_source_maybe'},{text:'Probably not',next:'resale_check'}]},
+      tools_source:{label:'Availability',question:'Easy to source in Honduras?',hint:'Specialty tools (Makita, Dewalt) are expensive and hard to find there.',options:[{text:'Hard to find / expensive there',next:'__keep'},{text:'Available in Tegucigalpa',next:'__sell'}]},
+      tools_source_maybe:{label:'Redundancy',question:'Already have a tool that does the same job?',options:[{text:'No — this fills a gap',next:'tools_source'},{text:'Yes — I have something that covers it',next:'__sell'}]},
+    }},
+  kitchen:{icon:'🍳',name:'Cookware, Dishes & Kitchen',desc:'Pots, pans, appliances, utensils',
+    start:{label:'GF safety first',question:'Part of your dedicated gluten-free set?',hint:'Celiac: porous items that contacted gluten cannot be safely reclaimed for GF use.',
+      options:[{text:'Yes — dedicated GF (never had gluten)',next:'kitchen_gf_keep'},{text:'Shared — used with gluten',next:'kitchen_shared_gf'},{text:'GF contact isn\'t a concern',next:'kitchen_type'}]},
+    nodes:{
+      kitchen_gf_keep:{label:'GF item quality',question:'Quality piece worth shipping, or worn out?',options:[{text:'Quality — keep',next:'__keep'},{text:'Cheap or worn — replace there',next:'__toss'}]},
+      kitchen_shared_gf:{label:'GF risk',question:'Porous, scratched, or absorbent?',hint:'Cast iron, wooden utensils, scratched nonstick = gluten risk. Stainless, glass, ceramic (unscratched) safe.',options:[{text:'Porous or scratched — gluten risk',next:'kitchen_shared_out'},{text:'Non-porous, unscratched — safe',next:'kitchen_type'}]},
+      kitchen_shared_out:{label:'GF safety',question:'Can\'t come to Honduras — value here?',options:[{text:'Yes — sell/give to non-GF household',next:'sell_or_give'},{text:'Worn out anyway',next:'__toss'}]},
+      kitchen_type:{label:'Item type',question:'What kind of kitchen item?',options:[{text:'Electric appliance',next:'kitchen_voltage'},{text:'Cookware — pots, pans, bakeware',next:'kitchen_cookware'},{text:'Dishes, glasses, or serveware',next:'kitchen_dishes'},{text:'Utensils, tools, gadgets',next:'kitchen_utensils'}]},
+      kitchen_voltage:{label:'Voltage',question:'110V compatible?',hint:'Honduras is 110V/60Hz — same as US.',options:[{text:'Yes — 110V',next:'kitchen_appliance_need'},{text:'220V only or unsure',next:'kitchen_appliance_no'}]},
+      kitchen_appliance_no:{label:'Incompatible',question:'Worth a converter?',options:[{text:'Not worth it — sell',next:'__sell'},{text:'Specialty — worth adapting',next:'kitchen_appliance_need'}]},
+      kitchen_appliance_need:{label:'Usage',question:'Use it regularly for cooking or ministry hosting?',options:[{text:'Yes — reach for it weekly',next:'__keep'},{text:'Occasionally or rarely',next:'__sell'}]},
+      kitchen_cookware:{label:'Quality',question:'Quality worth shipping?',hint:'Good stainless, enameled cast iron worth it. Worn nonstick — replace in Honduras.',options:[{text:'Quality — use it often',next:'__keep'},{text:'Decent but replaceable',next:'__sell'},{text:'Worn / low quality',next:'__toss'}]},
+      kitchen_dishes:{label:'Dishes',question:'Meaningful set or everyday replaceable?',hint:'Dishes are heavy. A small meaningful set is worth it. Everyday dishes — buy in Tegucigalpa.',options:[{text:'Special or sentimental set',next:'__keep'},{text:'Everyday — replaceable',next:'__sell'}]},
+      kitchen_utensils:{label:'Utensils',question:'Specialty or hard-to-find?',options:[{text:'Specialty or GF-dedicated',next:'__keep'},{text:'Generic and easily replaced',next:'__toss'}]},
+    }},
+  clothing:{icon:'👕',name:'Clothing & Linens',desc:'Clothes, shoes, bedding, towels',
+    start:{label:'Climate fit',question:'Appropriate for tropical highland climate?',hint:'Valle de Ángeles: 70–85°F days, cool evenings, rainy season. Heavy winter gear is nearly useless.',
+      options:[{text:'Lightweight / breathable / layering',next:'clothing_purpose'},{text:'Heavy winter or cold-weather gear',next:'clothing_cold'},{text:'Linens or bedding',next:'clothing_linens'}]},
+    nodes:{
+      clothing_cold:{label:'Cold weather gear',question:'Needed for travel or Reyna\'s Turkey trip?',options:[{text:'Yes — travel use',next:'clothing_cold_keep'},{text:'No — won\'t need it',next:'sell_or_give'}]},
+      clothing_cold_keep:{label:'Quantity',question:'Already have enough for travel?',options:[{text:'No — fills a gap',next:'__keep'},{text:'Duplicates — excess',next:'sell_or_give'}]},
+      clothing_purpose:{label:'Purpose',question:'Primary use?',options:[{text:'Ministry / professional',next:'clothing_ministry'},{text:'Outdoor, work, or active',next:'clothing_outdoor'},{text:'Casual everyday',next:'clothing_everyday'}]},
+      clothing_ministry:{label:'Ministry clothing',question:'Modest, professional, appropriate for Honduran context?',options:[{text:'Yes — fits ministry well',next:'clothing_condition'},{text:'Too casual or out of place',next:'__give'}]},
+      clothing_outdoor:{label:'Outdoor gear',question:'Quick-dry, UV-rated, or durable for humid outdoors?',options:[{text:'Yes — performance wear',next:'clothing_condition'},{text:'Cotton casual — not great in humidity',next:'clothing_everyday'}]},
+      clothing_everyday:{label:'Everyday wear',question:'Good condition and wearing it regularly?',hint:'If you haven\'t worn it in 6 months, you won\'t in Honduras either.',options:[{text:'Good condition, wear regularly',next:'clothing_condition'},{text:'Haven\'t worn it — being honest',next:'__give'}]},
+      clothing_condition:{label:'Condition',question:'Good condition with significant life left?',options:[{text:'Good to excellent',next:'__keep'},{text:'Worn, stained, or near end of life',next:'__donate'}]},
+      clothing_linens:{label:'Linens type',question:'Quality bedding or basic towels/linens?',options:[{text:'Quality bedding worth shipping',next:'clothing_linens_q'},{text:'Towels and everyday linens',next:'clothing_linens_b'}]},
+      clothing_linens_q:{label:'Bedding',question:'Lightweight and breathable — right for tropics?',options:[{text:'Lightweight cotton / linen',next:'__keep'},{text:'Heavy / warm — won\'t need it',next:'__sell'}]},
+      clothing_linens_b:{label:'Linen condition',question:'Good shape or worn out?',options:[{text:'Good condition',next:'__keep'},{text:'Worn — replace in Honduras',next:'__toss'}]},
+    }},
+  electronics:{icon:'📷',name:'Electronics & Cameras',desc:'Cameras, computers, phones, gear',
+    start:{label:'Type',question:'What kind of electronic item?',
+      options:[{text:'Camera or photography gear',sub:'Sony system, lenses, accessories',next:'elec_camera'},{text:'Drone or aerial equipment',next:'elec_drone'},{text:'Computer, tablet, or phone',next:'elec_computer'},{text:'TV, audio, or home electronics',next:'elec_av'},{text:'Other electronics / accessories',next:'elec_general'}]},
+    nodes:{
+      elec_camera:{label:'Sony system',question:'Part of your Sony system, or redundant gear?',options:[{text:'Sony body, lens, or core accessory',next:'__keep'},{text:'Redundant or duplicate',next:'__sell'},{text:'Different system / unrelated gear',next:'elec_camera_other'}]},
+      elec_camera_other:{label:'Camera use',question:'Clear active use for photography, ministry, or drone work?',options:[{text:'Yes — concrete use planned',next:'__keep'},{text:'Nice to have but not essential',next:'__sell'}]},
+      elec_drone:{label:'Drone gear',question:'Primary drone or essential flight accessory?',hint:'Extra batteries, ND filters, controllers all earn container space.',options:[{text:'Primary drone or essential accessory',next:'__keep'},{text:'Redundant or outdated',next:'__sell'}]},
+      elec_computer:{label:'Computer',question:'Primary work device?',options:[{text:'Primary machine — essential',next:'__keep'},{text:'Secondary or backup device',next:'elec_computer_backup'},{text:'Old or rarely used',next:'__sell'}]},
+      elec_computer_backup:{label:'Backup value',question:'Worth having a backup in your remote location?',hint:'In Valle de Ángeles repairs and replacements are hard to come by.',options:[{text:'Yes — remote location makes backup valuable',next:'__keep'},{text:'Overkill',next:'__sell'}]},
+      elec_av:{label:'AV',question:'110V compatible?',options:[{text:'Yes — 110V',next:'elec_av_need'},{text:'220V or region-locked',next:'__sell'}]},
+      elec_av_need:{label:'AV need',question:'Regular use in home or ministry space?',options:[{text:'Yes — clear regular use',next:'__keep'},{text:'Nice to have but not essential',next:'__sell'}]},
+      elec_general:{label:'General electronics',question:'110V and in regular use?',options:[{text:'110V, use it regularly',next:'elec_replaceable'},{text:'220V or rarely used',next:'__sell'}]},
+      elec_replaceable:{label:'Replaceability',question:'Hard or expensive to replace in Honduras?',options:[{text:'Hard or expensive to replace',next:'__keep'},{text:'Easily replaceable',next:'__sell'}]},
+    }},
+  furniture:{icon:'🪑',name:'Furniture & Large Items',desc:'Sofas, tables, beds, appliances',
+    start:{label:'Humidity check',question:'Can it handle tropical humidity?',hint:'Valle de Ángeles: high rainy-season humidity. Solid hardwood/metal fine. Particle board/MDF warps and molds.',
+      options:[{text:'Solid wood, metal, or durable',next:'furn_need'},{text:'Particle board or MDF',next:'__sell'},{text:'Upholstered — fabric or foam',next:'furn_upholstered'}]},
+    nodes:{
+      furn_upholstered:{label:'Upholstery quality',question:'Excellent condition with quality materials?',hint:'Upholstery in humid climates can mold. Only high-quality, tightly woven fabric is worth the shipping risk.',options:[{text:'Excellent condition',next:'furn_need'},{text:'Average or cheap foam',next:'__sell'}]},
+      furn_need:{label:'Essential?',question:'Essential for home or ministry space, or extra?',options:[{text:'Essential for living or ministry',next:'furn_container'},{text:'Extra, decorative, or duplicate',next:'__sell'}]},
+      furn_container:{label:'Container value',question:'Size-to-value worth container space?',hint:'A $100 bookshelf costing $150 to ship doesn\'t make sense when available locally.',options:[{text:'High-value / irreplaceable',next:'__keep'},{text:'Medium value — check local',next:'furn_local'},{text:'Low value',next:'__sell'}]},
+      furn_local:{label:'Local sourcing',question:'Available in Honduras?',hint:'Basic furniture readily available in Tegucigalpa at reasonable prices.',options:[{text:'Easily found locally',next:'__sell'},{text:'Specialty or hard to find',next:'__keep'}]},
+    }},
+  books:{icon:'📚',name:'Books, Media & Office',desc:'Books, files, supplies, ministry',
+    start:{label:'Content type',question:'What type of material?',
+      options:[{text:'Ministry or counseling resources',sub:'Guides, Bibles, bilingual materials',next:'books_ministry'},{text:'Reference books or professional resources',next:'books_reference'},{text:'Personal reading or leisure',next:'books_leisure'},{text:'Office supplies, files, or paper',next:'books_office'},{text:'DVDs, CDs, or physical media',next:'books_media'}]},
+    nodes:{
+      books_ministry:{label:'Ministry materials',question:'Bilingual, Spanish, or ministry-specific?',hint:'Your bilingual counseling guides, "Love Redeemed" study, and Honduran Spanish recipe collections are irreplaceable.',options:[{text:'Yes — bilingual, Spanish, or ministry-specific',next:'__keep'},{text:'English-only, available digitally',next:'books_digital'}]},
+      books_reference:{label:'Reference',question:'Actively use it, or available digitally?',options:[{text:'Actively use, no digital substitute',next:'__keep'},{text:'Available digitally or rarely used',next:'__donate'}]},
+      books_leisure:{label:'Leisure',question:'Will you re-read it?',options:[{text:'Will re-read or meaningful to keep',next:'__keep'},{text:'Read once — done',next:'__donate'},{text:'Unread — will get digitally',next:'__donate'}]},
+      books_digital:{label:'Digital substitute',question:'Good digital version available?',options:[{text:'Yes — digital works fine',next:'__donate'},{text:'No — physical copy necessary',next:'__keep'}]},
+      books_office:{label:'Office materials',question:'Active files or archival?',options:[{text:'Active — ongoing need',next:'__keep'},{text:'Historical — can digitize',next:'books_scan'},{text:'Outdated / unnecessary',next:'__toss'}]},
+      books_scan:{label:'Scan & toss',question:'Can these be scanned before you leave?',options:[{text:'Yes — scan and discard',next:'__toss'},{text:'Originals legally required',next:'__keep'}]},
+      books_media:{label:'Physical media',question:'Available on streaming?',options:[{text:'Available streaming — no need',next:'__toss'},{text:'Rare, out of print, not on streaming',next:'__keep'}]},
+    }},
+};
+
+const CAT_META={tools:{icon:'🔧',name:'Tools & Power Equipment'},kitchen:{icon:'🍳',name:'Cookware, Dishes & Kitchen'},clothing:{icon:'👕',name:'Clothing & Linens'},electronics:{icon:'📷',name:'Electronics & Cameras'},furniture:{icon:'🪑',name:'Furniture & Large Items'},books:{icon:'📚',name:'Books, Media & Office'},other:{icon:'📦',name:'Other'}};
+const OC_LABELS={keep:'🧳 Keep',sell:'💰 Sell',give:'🤝 Give Away',donate:'❤️ Donate',toss:'🗑️ Toss'};
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+const LS_KEY='hn_manifest_v5';
+let decisionLog=[];
+try{const s=localStorage.getItem(LS_KEY);if(s)decisionLog=JSON.parse(s);}catch(e){}
+
+let treeHistory=[],currentNodeId='__category_select',currentCategory=null;
+let itemData={name:'',qty:'1',value:'',origin:'United States',catKey:''};
+let currentManifestTab='keep';
+let selectedDisp=null;
+
+function saveLog(){try{localStorage.setItem(LS_KEY,JSON.stringify(decisionLog));}catch(e){toast('⚠️ Storage full — export JSON to back up');}}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg,dur=2600){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function navTo(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(name+'-screen').classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  document.getElementById('main-content').scrollTop=0;
+  if(name==='manifest'){document.getElementById('print-date').textContent=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});renderManifestContent();}
+  if(name==='settings')renderSettings();
+  if(name==='manual')resetManualForm();
+  if(name==='volume')renderVolume();
+  if(name==='sar')renderSAR();
+  if(name==='qr')renderQR();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TREE ENGINE
+// ═══════════════════════════════════════════════════════════
+function getNode(id){
+  if(id==='__sell_or_give')return SHARED.sell_or_give;
+  if(id==='__resale_check')return SHARED.resale_check;
+  if(SHARED[id])return SHARED[id];
+  if(id.startsWith('__')&&OUTCOMES[id.slice(2)])return{__outcome:id.slice(2)};
+  if(currentCategory){const cat=CATEGORIES[currentCategory];if(cat){if(id==='__cat_start')return cat.start;if(cat.nodes[id])return cat.nodes[id];}}
+  return null;
+}
+function rn(n){if(n==='__sell_or_give')return 'sell_or_give';if(n==='__resale_check')return 'resale_check';return n;}
+
+function render(id){
+  currentNodeId=id;
+  const wrap=document.getElementById('card-wrap');
+  const badge=document.getElementById('category-badge');
+  if(id==='__category_select'){badge.className='';badge.innerHTML='';renderCatSelect(wrap);renderProg(0);return;}
+  if(currentCategory){const c=CATEGORIES[currentCategory];badge.innerHTML=c.icon+' '+c.name;badge.className='category-badge visible';}
+  const node=getNode(id);
+  if(!node)return;
+  if(node.__outcome){renderOutcome(OUTCOMES[node.__outcome],wrap);renderProg(99);}
+  else{renderQuestion(node,wrap);renderProg(treeHistory.length);}
+}
+
+function renderProg(depth){
+  const MAX=6,bar=document.getElementById('progress-wrap');bar.innerHTML='';
+  for(let i=0;i<MAX;i++){const d=document.createElement('div');d.className='prog-dot'+(i<depth?' done':i===depth&&depth<MAX?' active':'');bar.appendChild(d);}
+}
+
+function renderCatSelect(wrap){
+  const grid=Object.entries(CATEGORIES).map(([k,c])=>`<button class="cat-btn" data-cat="${k}"><span class="cat-icon">${c.icon}</span><span class="cat-name">${c.name}</span><span class="cat-desc">${c.desc}</span></button>`).join('');
+  wrap.innerHTML=`<div class="card">
+    <div class="card-label">New item — step 1</div>
+    <div class="card-question">What category is this item?</div>
+    <div class="card-hint">Enter item details, then select a category for tailored questions.</div>
+    <div class="item-form" id="item-form">
+      <div class="form-field full"><label>Item Description *</label><input type="text" id="f-name" placeholder="e.g. DeWalt circular saw" maxlength="80" value="${escH(itemData.name)}"></div>
+      <div class="form-field"><label>Quantity</label><input type="number" id="f-qty" min="1" max="999" value="${itemData.qty}"></div>
+      <div class="form-field"><label>Est. Value (USD)</label><input type="text" id="f-value" placeholder="e.g. 150" value="${itemData.value}" maxlength="12"></div>
+      <div class="form-field full"><label>Country of Origin</label><input type="text" id="f-origin" placeholder="United States" value="${itemData.origin}" maxlength="50"></div>
+    </div>
+    <div class="cat-grid">${grid}</div>
+    <div class="card-footer"><span></span><span class="step-label">${decisionLog.length} item${decisionLog.length!==1?'s':''} logged</span><span></span></div>
+  </div>`;
+  ['name','qty','value','origin'].forEach(f=>document.getElementById('f-'+f).addEventListener('input',e=>{itemData[f]=e.target.value;}));
+  wrap.querySelectorAll('.cat-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    itemData.name=document.getElementById('f-name').value.trim();
+    itemData.qty=document.getElementById('f-qty').value||'1';
+    itemData.value=document.getElementById('f-value').value.trim();
+    itemData.origin=document.getElementById('f-origin').value.trim()||'United States';
+    itemData.catKey=btn.dataset.cat;
+    currentCategory=btn.dataset.cat;
+    treeHistory=['__category_select'];
+    render('__cat_start');
+  }));
+}
+
+function renderQuestion(node,wrap){
+  const btns=node.options.map(opt=>`<button class="btn" data-next="${rn(opt.next)}">${escH(opt.text)}${opt.sub?`<div class="btn-sub">${escH(opt.sub)}</div>`:''}</button>`).join('');
+  wrap.innerHTML=`<div class="card">
+    <div class="card-label">${escH(node.label)}</div>
+    <div class="card-question">${escH(node.question)}</div>
+    ${node.hint?`<div class="card-hint">${escH(node.hint)}</div>`:''}
+    <div class="btn-row">${btns}</div>
+    <div class="card-footer">
+      <button class="back-btn" id="back-btn" ${treeHistory.length===0?'disabled':''}>← back</button>
+      <span class="step-label">step ${treeHistory.length+1}</span>
+      <button class="restart-btn" id="restart-btn">new item</button>
+    </div>
+  </div>`;
+  wrap.querySelectorAll('.btn').forEach(btn=>btn.addEventListener('click',()=>{treeHistory.push(currentNodeId);render(btn.dataset.next);}));
+  document.getElementById('back-btn').addEventListener('click',goBack);
+  document.getElementById('restart-btn').addEventListener('click',startNewItem);
+}
+
+function renderOutcome(oc,wrap){
+  const tips=oc.tips.map(t=>`<li>${escH(t)}</li>`).join('');
+  const nm=itemData.name||'(unnamed item)';
+  wrap.innerHTML=`<div class="outcome-card ${oc.cls}">
+    <span class="outcome-icon">${oc.icon}</span>
+    <div class="outcome-verdict">Decision — <em>${escH(nm)}</em></div>
+    <div class="outcome-title">${oc.title}</div>
+    <div class="outcome-body">${oc.body}</div>
+    <div class="tips-label">Next steps</div>
+    <ul class="tips-list">${tips}</ul>
+    <div class="card-footer">
+      <button class="back-btn" id="back-btn">← back</button>
+      <button class="restart-btn" id="restart-btn">next item →</button>
+    </div>
+  </div>`;
+  addToLog(oc.category);
+  document.getElementById('back-btn').addEventListener('click',goBack);
+  document.getElementById('restart-btn').addEventListener('click',startNewItem);
+}
+
+function goBack(){if(treeHistory.length>0){const prev=treeHistory.pop();if(prev==='__category_select')currentCategory=null;render(prev);}}
+function startNewItem(){itemData={name:'',qty:'1',value:'',origin:'United States',catKey:''};treeHistory=[];currentCategory=null;render('__category_select');}
+
+// ═══════════════════════════════════════════════════════════
+//  LOG
+// ═══════════════════════════════════════════════════════════
+function addToLog(category){
+  const cat=currentCategory?CATEGORIES[currentCategory]:null;
+  decisionLog.unshift({
+    id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    category,source:'tree',
+    name:itemData.name||'(unnamed item)',
+    qty:itemData.qty||'1',
+    value:itemData.value||'',
+    origin:itemData.origin||'United States',
+    catKey:itemData.catKey||currentCategory||'',
+    catName:cat?cat.name:'',
+    catIcon:cat?cat.icon:'📦',
+    notes:'',
+    date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+  });
+  saveLog();
+  toast(OC_LABELS[category]+' — logged');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MANIFEST
+// ═══════════════════════════════════════════════════════════
+function switchManifestTab(tab){
+  currentManifestTab=tab;
+  document.getElementById('tab-keep').classList.toggle('active',tab==='keep');
+  document.getElementById('tab-all').classList.toggle('active',tab==='all');
+  renderManifestContent();
+}
+
+function renderManifestContent(){
+  const el=document.getElementById('manifest-content');
+  const items=currentManifestTab==='keep'?decisionLog.filter(e=>e.category==='keep'):decisionLog;
+  if(!items.length){
+    el.innerHTML=`<div class="empty-state"><span class="empty-icon">${currentManifestTab==='keep'?'🧳':'📋'}</span><p>${currentManifestTab==='keep'?'No items marked to ship yet.<br>Evaluate items using the tree.':'No items logged yet.<br>Use the tree or Add Item tab.'}</p></div>`;return;
+  }
+  const totalVal=items.reduce((s,e)=>{const v=parseFloat((e.value||'').replace(/[^0-9.]/g,''));return s+(isNaN(v)?0:v*(parseInt(e.qty)||1));},0);
+  const showDisp=currentManifestTab==='all';
+  const rows=items.map((e,i)=>`<tr>
+    <td style="color:var(--muted);font-size:0.65rem">${i+1}</td>
+    <td class="photo-cell">${e.photo?`<img class="photo-thumb" src="${e.photo}" onclick="showPhotoModal('${e.id}')" alt="photo">`:`<span style="font-size:1.1rem;opacity:0.25">📷</span>`}</td>
+    <td><strong>${escH(e.name)}</strong>${e.notes?`<br><span style="font-size:0.62rem;color:var(--muted)">${escH(e.notes)}</span>`:''}</td>
+    <td>${escH(e.catIcon)}</td>
+    <td style="text-align:center">${escH(e.qty)}</td>
+    <td>${e.value?'$'+parseFloat(e.value).toFixed(2):'—'}</td>
+    <td>${escH(e.origin)}</td>
+    ${showDisp?`<td><span class="badge badge-${e.category}">${OC_LABELS[e.category]}</span></td>`:''}
+    <td><button class="row-edit" onclick="openEditModal('${e.id}')" title="Edit">✏️</button><button class="row-del" onclick="deleteItem('${e.id}')" title="Remove">✕</button></td>
+  </tr>`).join('');
+  el.innerHTML=`<div class="manifest-table-wrap"><table class="manifest-table">
+    <thead><tr><th>#</th><th></th><th>Description</th><th>Cat</th><th>Qty</th><th>Value</th><th>Origin</th>${showDisp?'<th>Disposition</th>':''}<th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>
+  <div class="manifest-footer">
+    <span><strong>${items.length}</strong> item${items.length!==1?'s':''}</span>
+    <span>Declared value: <strong>${totalVal>0?'$'+totalVal.toFixed(2):'—'}</strong></span>
+  </div>`;
+}
+
+function showPhotoModal(id){
+  const entry=decisionLog.find(e=>e.id===id);
+  if(!entry||!entry.photo)return;
+  const m=document.createElement('div');
+  m.className='photo-modal';
+  m.innerHTML=`<button class="photo-modal-close" onclick="this.parentElement.remove()">✕</button><img src="${entry.photo}" alt="${escH(entry.name)}">`;
+  m.onclick=ev=>{if(ev.target===m)m.remove();};
+  document.body.appendChild(m);
+}
+
+function deleteItem(id){
+  decisionLog=decisionLog.filter(e=>e.id!==id);
+  saveLog(); renderManifestContent(); toast('Item removed');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EDIT MODAL
+// ═══════════════════════════════════════════════════════════
+function openEditModal(id){
+  const entry=decisionLog.find(e=>e.id===id);
+  if(!entry)return;
+
+  const backdrop=document.createElement('div');
+  backdrop.className='edit-modal-backdrop';
+  backdrop.id='edit-modal-backdrop';
+  backdrop.onclick=ev=>{if(ev.target===backdrop)closeEditModal();};
+
+  const catOptions=Object.entries(CAT_META).map(([k,v])=>
+    `<option value="${k}" ${entry.catKey===k?'selected':''}>${v.icon} ${v.name}</option>`
+  ).join('');
+
+  const dispOptions=Object.entries(OC_LABELS).map(([k,v])=>
+    `<option value="${k}" ${entry.category===k?'selected':''}>${v}</option>`
+  ).join('');
+
+  backdrop.innerHTML=`
+    <div class="edit-modal">
+      <div class="edit-modal-header">
+        <h3>Edit Item</h3>
+        <button class="edit-modal-close" onclick="closeEditModal()">✕</button>
+      </div>
+      <div class="edit-form">
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Item Description *</label>
+            <input type="text" id="edit-name" value="${escH(entry.name)}" maxlength="80">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Quantity</label>
+            <input type="number" id="edit-qty" min="1" value="${escH(entry.qty||'1')}">
+          </div>
+          <div class="form-field">
+            <label>Est. Value (USD)</label>
+            <input type="text" id="edit-value" value="${escH(entry.value||'')}" placeholder="e.g. 45" maxlength="12">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Country of Origin</label>
+            <input type="text" id="edit-origin" value="${escH(entry.origin||'United States')}" maxlength="50">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Category</label>
+            <select id="edit-cat">${catOptions}</select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Disposition</label>
+            <select id="edit-disp">${dispOptions}</select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>Notes</label>
+            <input type="text" id="edit-notes" value="${escH(entry.notes||'')}" maxlength="120">
+          </div>
+        </div>
+        <button class="edit-save-btn" onclick="saveEdit('${id}')">Save Changes</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(backdrop);
+  document.getElementById('edit-name').focus();
+}
+
+function saveEdit(id){
+  const idx=decisionLog.findIndex(e=>e.id===id);
+  if(idx===-1){closeEditModal();return;}
+
+  const name=document.getElementById('edit-name').value.trim();
+  if(!name){toast('⚠️ Name is required');return;}
+
+  const catKey=document.getElementById('edit-cat').value||'other';
+  const catMeta=CAT_META[catKey]||{icon:'📦',name:'Other'};
+
+  decisionLog[idx]={
+    ...decisionLog[idx],
+    name,
+    qty:document.getElementById('edit-qty').value||'1',
+    value:document.getElementById('edit-value').value.trim(),
+    origin:document.getElementById('edit-origin').value.trim()||'United States',
+    catKey,
+    catName:catMeta.name,
+    catIcon:catMeta.icon,
+    category:document.getElementById('edit-disp').value,
+    notes:document.getElementById('edit-notes').value.trim(),
+  };
+
+  saveLog();
+  closeEditModal();
+  renderManifestContent();
+  toast('✓ Item updated');
+}
+
+function closeEditModal(){
+  const el=document.getElementById('edit-modal-backdrop');
+  if(el)el.remove();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MANUAL ENTRY
+// ═══════════════════════════════════════════════════════════
+function resetManualForm(){
+  selectedDisp=null;
+  ['m-name','m-qty','m-value','m-origin','m-notes'].forEach(id=>{const el=document.getElementById(id);if(el){if(id==='m-qty')el.value='1';else if(id==='m-origin')el.value='';else el.value='';}});
+  document.getElementById('m-cat').value='';
+  document.querySelectorAll('.disp-btn').forEach(b=>b.className='disp-btn');
+  document.getElementById('add-manual-btn').disabled=true;
+  document.getElementById('m-photo-data').value='';
+  const pt=document.getElementById('m-photo-thumb');
+  pt.innerHTML='📷'; pt.className='photo-placeholder';
+}
+
+function handlePhotoSelect(event){
+  const file=event.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const data=e.target.result;
+    document.getElementById('m-photo-data').value=data;
+    const pt=document.getElementById('m-photo-thumb');
+    pt.outerHTML=`<img class="photo-thumb" id="m-photo-thumb" src="${data}" onclick="document.getElementById('m-photo-input').click()" title="Tap to change photo">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function addManualItem(){
+  const name=document.getElementById('m-name').value.trim();
+  if(!name||!selectedDisp){toast('⚠️ Name and disposition required');return;}
+  const catKey=document.getElementById('m-cat').value||'other';
+  const catMeta=CAT_META[catKey]||{icon:'📦',name:'Other'};
+  const entry={
+    id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    category:selectedDisp, source:'manual',
+    name,
+    qty:document.getElementById('m-qty').value||'1',
+    value:document.getElementById('m-value').value.trim(),
+    origin:document.getElementById('m-origin').value.trim()||'United States',
+    catKey,catName:catMeta.name,catIcon:catMeta.icon,
+    notes:document.getElementById('m-notes').value.trim(),
+    photo:document.getElementById('m-photo-data').value||'',
+    date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+  };
+  decisionLog.unshift(entry);
+  saveLog();
+  toast(OC_LABELS[selectedDisp]+' — logged');
+  resetManualForm();
+}
+
+function selectDisp(d){
+  selectedDisp=d;
+  document.querySelectorAll('.disp-btn').forEach(b=>{b.className='disp-btn'+(b.dataset.d===d?' selected-'+d:'');});
+  checkManualValid();
+}
+
+function checkManualValid(){
+  const name=document.getElementById('m-name').value.trim();
+  document.getElementById('add-manual-btn').disabled=!(name&&selectedDisp);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('m-name').addEventListener('input',checkManualValid);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  VOLUME ESTIMATOR
+// ═══════════════════════════════════════════════════════════
+const CONTAINER_CUFT=1169;
+const VOL_LS='hn_volumes_v5';
+let itemVolumes={};
+try{const s=localStorage.getItem(VOL_LS);if(s)itemVolumes=JSON.parse(s);}catch(e){}
+function saveVolumes(){try{localStorage.setItem(VOL_LS,JSON.stringify(itemVolumes));}catch(e){}}
+
+function renderVolume(){
+  const keepItems=decisionLog.filter(e=>e.category==='keep');
+  if(!keepItems.length){
+    document.getElementById('vol-items-list').innerHTML='<div class="empty-state"><span class="empty-icon">📦</span><p>No Keep items yet.<br>Evaluate items using the tree first.</p></div>';
+    updateVolumeGauge();return;
+  }
+  const rows=keepItems.map(e=>`
+    <div class="vol-item-row">
+      <div class="vol-item-name">${escH(e.catIcon)} ${escH(e.name)}<br><span class="vol-item-badge">qty: ${escH(e.qty)}</span></div>
+      <input class="vol-input" type="number" min="0" step="0.1" placeholder="0.0"
+        value="${itemVolumes[e.id]||''}"
+        onchange="setVolume('${e.id}',this.value)"
+        oninput="setVolume('${e.id}',this.value)">
+      <span class="vol-unit">ft³</span>
+    </div>`).join('');
+  document.getElementById('vol-items-list').innerHTML=rows;
+  updateVolumeGauge();
+}
+
+function setVolume(id,val){
+  const v=parseFloat(val)||0;
+  if(v>0)itemVolumes[id]=v; else delete itemVolumes[id];
+  saveVolumes();
+  updateVolumeGauge();
+}
+
+function updateVolumeGauge(){
+  const keepItems=decisionLog.filter(e=>e.category==='keep');
+  let used=0;
+  keepItems.forEach(e=>{
+    const v=itemVolumes[e.id]||0;
+    const qty=parseInt(e.qty)||1;
+    used+=v*qty;
+  });
+  const pct=Math.min((used/CONTAINER_CUFT)*100,100);
+  document.getElementById('vol-used-num').textContent=used.toFixed(1);
+  const gauge=document.getElementById('vol-gauge');
+  gauge.style.width=pct+'%';
+  gauge.className='vol-gauge-fill '+(pct<75?'ok':pct<95?'warn':'over');
+  document.getElementById('vol-pct-label').textContent=pct.toFixed(1)+'% used';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SAR CUSTOMS REPORT
+// ═══════════════════════════════════════════════════════════
+function renderSAR(){
+  const dateEl=document.getElementById('sar-date');
+  if(!dateEl.value)dateEl.value=new Date().toISOString().split('T')[0];
+  ['sar-name','sar-passport','sar-address','sar-port','sar-date'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',updateSARPreview,{once:false});
+    document.getElementById(id).addEventListener('change',updateSARPreview,{once:false});
+  });
+  updateSARPreview();
+}
+
+function updateSARPreview(){
+  const name=document.getElementById('sar-name').value||'[Nombre / Declarant Name]';
+  const passport=document.getElementById('sar-passport').value||'[Pasaporte/ID / Passport/ID]';
+  const address=document.getElementById('sar-address').value||'Valle de Ángeles, Francisco Morazán, Honduras';
+  const port=document.getElementById('sar-port').value||'Puerto Cortés';
+  const rawDate=document.getElementById('sar-date').value;
+  const dateEN=rawDate?new Date(rawDate+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}):'[Date]';
+  const dateES=rawDate?new Date(rawDate+'T12:00:00').toLocaleDateString('es-HN',{year:'numeric',month:'long',day:'numeric'}):'[Fecha]';
+
+  const keepItems=decisionLog.filter(e=>e.category==='keep');
+  const totalVal=keepItems.reduce((s,e)=>{const v=parseFloat((e.value||'').replace(/[^0-9.]/g,''));return s+(isNaN(v)?0:v*(parseInt(e.qty)||1));},0);
+
+  const itemLines=keepItems.length
+    ? keepItems.map((e,i)=>`  ${String(i+1).padStart(3,'0')}  ${String(e.qty||1).padStart(3)}  ${(e.origin||'Estados Unidos').padEnd(16)}  $${parseFloat(e.value||0).toFixed(2).padStart(9)}  ${e.name}`).join('\n')
+    : '  [Ningún artículo para enviar / No Keep items logged yet]';
+
+  const spanishText=
+`REPÚBLICA DE HONDURAS
+SERVICIO DE ADMINISTRACIÓN DE RENTAS (SAR)
+DECLARACIÓN DE MENAJE DE CASA
+Artículo 82 — Ley Aduanera de Honduras
+
+────────────────────────────────────────
+INFORMACIÓN DEL DECLARANTE
+────────────────────────────────────────
+Nombre Completo:     ${name}
+Pasaporte / ID:      ${passport}
+Dirección Destino:   ${address}
+Puerto de Entrada:   ${port}
+Fecha de Declaración: ${dateES}
+
+────────────────────────────────────────
+INVENTARIO DE MENAJE DE CASA
+────────────────────────────────────────
+ No.  Cant  País de Origen    Val. Est.   Descripción
+${itemLines}
+
+────────────────────────────────────────
+TOTALES
+────────────────────────────────────────
+Total de Artículos:    ${keepItems.length}
+Valor Total Declarado: $${totalVal.toFixed(2)} USD
+
+────────────────────────────────────────
+DECLARACIÓN JURADA
+────────────────────────────────────────
+Yo, ${name}, declaro bajo juramento que el
+inventario anterior representa bienes de uso
+personal del hogar que se importan para uso
+propio como residente de Honduras. Estos
+artículos no son para reventa comercial.
+
+Firma: _______________________
+
+Fecha: ${dateES}
+
+NOTA: Este documento es una ayuda de preparación.
+Preséntelo al agente de la SAR / aduana en el
+puerto de entrada. Verifique los requisitos
+actuales con su agente aduanal o la oficina
+de la SAR antes de viajar.`;
+
+  const englishText=
+`REPUBLIC OF HONDURAS
+TAX ADMINISTRATION SERVICE (SAR)
+HOUSEHOLD GOODS DECLARATION
+Article 82 — Honduras Customs Law
+
+────────────────────────────────────────
+DECLARANT INFORMATION
+────────────────────────────────────────
+Full Name:           ${name}
+Passport / ID:       ${passport}
+Destination Address: ${address}
+Port of Entry:       ${port}
+Declaration Date:    ${dateEN}
+
+────────────────────────────────────────
+HOUSEHOLD GOODS INVENTORY
+────────────────────────────────────────
+ No.  Qty  Country of Origin  Est. Value   Description
+${itemLines}
+
+────────────────────────────────────────
+TOTALS
+────────────────────────────────────────
+Total Items:           ${keepItems.length}
+Total Declared Value:  $${totalVal.toFixed(2)} USD
+
+────────────────────────────────────────
+SWORN DECLARATION
+────────────────────────────────────────
+I, ${name}, hereby declare under oath that
+the above inventory represents personal
+household goods being imported for personal
+use as a resident of Honduras. These items
+are not for commercial resale.
+
+Signature: _______________________
+
+Date: ${dateEN}
+
+NOTE: This document is a preparation aid.
+Present to SAR / customs agent at port of
+entry. Verify current requirements with your
+customs broker or the SAR office before travel.`;
+
+  document.getElementById('sar-preview-es').textContent=spanishText;
+  document.getElementById('sar-preview-en').textContent=englishText;
+  // Store both for copy/print
+  document.getElementById('sar-preview-es').dataset.text=spanishText;
+  document.getElementById('sar-preview-en').dataset.text=englishText;
+}
+
+function copySAR(){
+  const es=document.getElementById('sar-preview-es').dataset.text||document.getElementById('sar-preview-es').textContent;
+  const en=document.getElementById('sar-preview-en').dataset.text||document.getElementById('sar-preview-en').textContent;
+  const combined='── ESPAÑOL ──────────────────────────────\n\n'+es+'\n\n── ENGLISH ──────────────────────────────\n\n'+en;
+  navigator.clipboard.writeText(combined).then(()=>toast('✓ Copied both languages')).catch(()=>toast('⚠️ Copy failed — select and copy manually'));
+}
+
+function printSAR(){
+  updateSARPreview();
+  const es=document.getElementById('sar-preview-es').dataset.text||'';
+  const en=document.getElementById('sar-preview-en').dataset.text||'';
+  const area=document.getElementById('sar-print-area');
+  area.innerHTML=`
+    <div style="text-align:center;margin-bottom:12pt;">
+      <div style="font-size:9pt;color:#666;letter-spacing:0.1em;text-transform:uppercase;">Honduras Move — Customs Declaration / Declaración de Aduana</div>
+      <hr style="border:none;border-top:1px solid #ccc;margin:6pt 0;">
+    </div>
+    <div class="bilingual-wrap">
+      <div>
+        <div class="lang-label">🇭🇳 Español</div>
+        <pre>${es.replace(/</g,'&lt;')}</pre>
+      </div>
+      <div>
+        <div class="lang-label">🇺🇸 English</div>
+        <pre>${en.replace(/</g,'&lt;')}</pre>
+      </div>
+    </div>`;
+  window.print();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOX MANAGER
+// ═══════════════════════════════════════════════════════════
+const BOX_LS='hn_boxes_v5';
+const DEFAULT_ROOMS=[
+  'Master Bedroom / Habitación Principal',
+  'Kitchen / Cocina',
+  'Living Room / Sala',
+  'Upstairs Living Room',
+  'Office / Oficina',
+  'Guest Room / Cuarto de Huéspedes',
+  'Bodega / Storage',
+];
+
+// boxes = { boxId: { id, number, name, room, itemIds:[] } }
+let boxes={};
+try{const s=localStorage.getItem(BOX_LS);if(s)boxes=JSON.parse(s);}catch(e){}
+function saveBoxes(){try{localStorage.setItem(BOX_LS,JSON.stringify(boxes));}catch(e){}}
+
+let currentQRView='boxes';
+let expandedBoxes=new Set();
+
+function switchQRView(view){
+  currentQRView=view;
+  ['boxes','unassigned','masterlist'].forEach(v=>{
+    const t=document.getElementById('qr-tab-'+v);
+    if(t)t.classList.toggle('active',v===view);
+  });
+  renderQR();
+}
+
+function renderQR(){
+  const el=document.getElementById('qr-content');
+  const keepItems=decisionLog.filter(e=>e.category==='keep');
+  if(!keepItems.length){
+    el.innerHTML='<div class="empty-state"><span class="empty-icon">🏷</span><p>No Keep items yet.<br>Evaluate items using the tree first.</p></div>';
+    return;
+  }
+  if(currentQRView==='boxes') renderBoxesView(el,keepItems);
+  else if(currentQRView==='unassigned') renderUnassignedView(el,keepItems);
+  else renderMasterListView(el,keepItems);
+}
+
+// ── Boxes View ──
+function renderBoxesView(el,keepItems){
+  const assignedItemIds=new Set(Object.values(boxes).flatMap(b=>b.itemIds||[]));
+  const unassignedCount=keepItems.filter(e=>!assignedItemIds.has(e.id)).length;
+
+  const boxList=Object.values(boxes).sort((a,b)=>
+    String(a.number).localeCompare(String(b.number),undefined,{numeric:true}));
+
+  let html=boxList.map(box=>{
+    const items=(box.itemIds||[]).map(id=>keepItems.find(e=>e.id===id)).filter(Boolean);
+    const isOpen=expandedBoxes.has(box.id);
+    const itemRows=items.map(e=>`
+      <div class="box-item-row">
+        <span class="box-item-name">${escH(e.catIcon)} ${escH(e.name)}</span>
+        <span class="box-item-qty">×${escH(e.qty)}</span>
+        <button class="box-item-remove" onclick="removeItemFromBox('${box.id}','${e.id}')" title="Remove from box">✕</button>
+      </div>`).join('');
+
+    const roomOptions=getRoomOptions(box.room);
+    const qrId='bqr-'+box.id;
+
+    return `<div class="box-card">
+      <div class="box-card-header" onclick="toggleBox('${box.id}')">
+        <div class="box-number">#${escH(String(box.number))}</div>
+        <div class="box-header-info">
+          <div class="box-header-name">${escH(box.name||'Box '+box.number)}</div>
+          <div class="box-header-room">${escH(box.room||'No room assigned')}</div>
+        </div>
+        <div class="box-header-count">${items.length} item${items.length!==1?'s':''}</div>
+        <div class="box-chevron ${isOpen?'open':''}">▶</div>
+      </div>
+      ${isOpen?`<div class="box-card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+          <div class="form-field">
+            <label>Box Label</label>
+            <input type="text" value="${escH(box.name||'')}" placeholder="e.g. Kitchen Essentials"
+              onchange="updateBox('${box.id}','name',this.value)" maxlength="40">
+          </div>
+          <div class="form-field">
+            <label>Destination Room</label>
+            <select onchange="updateBox('${box.id}','room',this.value)">${roomOptions}</select>
+          </div>
+        </div>
+        ${itemRows?`<div style="margin-bottom:0.65rem;">${itemRows}</div>`:'<div style="font-size:0.75rem;color:var(--muted);padding:0.5rem 0 0.75rem;">No items in this box yet.</div>'}
+        <div class="box-qr-wrap">
+          <div id="${qrId}" style="width:64px;height:64px"></div>
+          <div style="font-size:0.65rem;color:var(--muted);line-height:1.6;">QR links to box contents.<br>Scan on arrival to verify.</div>
+        </div>
+        <div class="box-actions">
+          <button class="box-action-btn" onclick="openAddItemsModal('${box.id}')">+ Add Items</button>
+          <button class="box-action-btn danger" onclick="deleteBox('${box.id}')">Delete Box</button>
+        </div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  html+=`<button class="new-box-btn" onclick="createNewBox()">+ Create New Box</button>`;
+  if(unassignedCount>0) html+=`<div style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:0.75rem;">${unassignedCount} Keep item${unassignedCount!==1?'s':''} not yet assigned to a box — see <strong>Unassigned</strong> tab</div>`;
+
+  el.innerHTML=html;
+
+  // Render QR codes for open boxes
+  boxList.filter(b=>expandedBoxes.has(b.id)).forEach(box=>{
+    const items=(box.itemIds||[]).map(id=>keepItems.find(e=>e.id===id)).filter(Boolean);
+    const qrEl=document.getElementById('bqr-'+box.id);
+    if(!qrEl)return;
+    try{
+      new QRCode(qrEl,{
+        text:JSON.stringify({box:box.number,name:box.name,room:box.room,items:items.map(e=>({name:e.name,qty:e.qty}))}),
+        width:64,height:64,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M
+      });
+    }catch(err){}
+  });
+}
+
+// ── Unassigned View ──
+function renderUnassignedView(el,keepItems){
+  const assignedItemIds=new Set(Object.values(boxes).flatMap(b=>b.itemIds||[]));
+  const unassigned=keepItems.filter(e=>!assignedItemIds.has(e.id));
+  if(!unassigned.length){
+    el.innerHTML='<div class="empty-state"><span class="empty-icon">✅</span><p>All Keep items are assigned to boxes!</p></div>';
+    return;
+  }
+  const boxOptions=Object.values(boxes).sort((a,b)=>
+    String(a.number).localeCompare(String(b.number),undefined,{numeric:true}))
+    .map(b=>`<option value="${b.id}">#${b.number} ${b.name||''} ${b.room?'('+b.room+')':''}</option>`)
+    .join('');
+
+  el.innerHTML=`<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.85rem;">${unassigned.length} item${unassigned.length!==1?'s':''} need a box. Select a box to assign each item, or <button class="box-action-btn" style="display:inline;margin-left:4px" onclick="createNewBox()">create a new box</button>.</div>`+
+  unassigned.map(e=>`
+    <div class="unassigned-item">
+      <div class="unassigned-item-info">
+        <div class="unassigned-item-name">${escH(e.catIcon)} ${escH(e.name)}</div>
+        <div class="unassigned-item-meta">${escH(e.catName)} · qty ${escH(e.qty)}${e.value?' · $'+parseFloat(e.value).toFixed(2):''}</div>
+      </div>
+      <select class="assign-select" onchange="assignItemToBox('${e.id}',this.value);this.value=''">
+        <option value="">— assign —</option>
+        ${boxOptions}
+      </select>
+    </div>`).join('');
+}
+
+// ── Master List View ──
+function renderMasterListView(el,keepItems){
+  const boxList=Object.values(boxes).sort((a,b)=>
+    String(a.number).localeCompare(String(b.number),undefined,{numeric:true}));
+  if(!boxList.length){
+    el.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span><p>No boxes created yet.<br>Go to the Boxes tab to get started.</p></div>';
+    return;
+  }
+  const assignedItemIds=new Set(Object.values(boxes).flatMap(b=>b.itemIds||[]));
+  const unassigned=keepItems.filter(e=>!assignedItemIds.has(e.id));
+
+  let html=boxList.map(box=>{
+    const items=(box.itemIds||[]).map(id=>keepItems.find(e=>e.id===id)).filter(Boolean);
+    const totalVal=items.reduce((s,e)=>{const v=parseFloat((e.value||'').replace(/[^0-9.]/g,''));return s+(isNaN(v)?0:v*(parseInt(e.qty)||1));},0);
+    return `<div class="master-box-section">
+      <div class="master-box-header">
+        <div>
+          <div class="master-box-title">Box #${escH(String(box.number))}${box.name?' — '+escH(box.name):''}</div>
+          <div style="font-size:0.68rem;color:var(--muted);margin-top:2px;">${items.length} item${items.length!==1?'s':''}${totalVal>0?' · $'+totalVal.toFixed(2)+' USD':''}</div>
+        </div>
+        <div class="master-box-room">${escH(box.room||'Room TBD')}</div>
+      </div>
+      <div class="master-item-list">
+        ${items.length?items.map((e,i)=>`
+          <div class="master-item-line">
+            <span>${i+1}. ${escH(e.catIcon)} ${escH(e.name)} <span style="color:var(--muted)">×${escH(e.qty)}</span></span>
+            <span class="master-item-val">${e.value?'$'+parseFloat(e.value).toFixed(2):''}</span>
+          </div>`).join('')
+        :'<div style="font-size:0.75rem;color:var(--muted);padding:0.35rem 0;">Empty box</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  if(unassigned.length){
+    html+=`<div class="master-box-section">
+      <div class="master-box-header">
+        <div class="master-box-title" style="color:var(--muted);">⚠ Unassigned Items</div>
+      </div>
+      <div class="master-item-list">
+        ${unassigned.map((e,i)=>`<div class="master-item-line"><span>${i+1}. ${escH(e.catIcon)} ${escH(e.name)} ×${escH(e.qty)}</span></div>`).join('')}
+      </div>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+
+// ── Box CRUD ──
+function createNewBox(){
+  const existingNums=Object.values(boxes).map(b=>parseInt(b.number)||0);
+  const nextNum=existingNums.length?Math.max(...existingNums)+1:1;
+  const id='box_'+Date.now();
+  boxes[id]={id,number:nextNum,name:'',room:'',itemIds:[]};
+  expandedBoxes.add(id);
+  saveBoxes();
+  renderQR();
+  toast('Box #'+nextNum+' created');
+}
+
+function toggleBox(id){
+  if(expandedBoxes.has(id))expandedBoxes.delete(id);
+  else expandedBoxes.add(id);
+  renderQR();
+}
+
+function updateBox(id,field,value){
+  if(!boxes[id])return;
+  boxes[id][field]=value;
+  saveBoxes();
+  renderQR();
+}
+
+function deleteBox(id){
+  if(!confirm('Delete this box? Items will be unassigned but not deleted.'))return;
+  delete boxes[id];
+  expandedBoxes.delete(id);
+  saveBoxes();
+  renderQR();
+  toast('Box deleted');
+}
+
+function removeItemFromBox(boxId,itemId){
+  if(!boxes[boxId])return;
+  boxes[boxId].itemIds=(boxes[boxId].itemIds||[]).filter(id=>id!==itemId);
+  saveBoxes();
+  renderQR();
+}
+
+function assignItemToBox(itemId,boxId){
+  if(!boxId||!boxes[boxId])return;
+  // Remove from any existing box first
+  Object.values(boxes).forEach(b=>{b.itemIds=(b.itemIds||[]).filter(id=>id!==itemId);});
+  boxes[boxId].itemIds.push(itemId);
+  saveBoxes();
+  renderQR();
+  toast('Item assigned to Box #'+boxes[boxId].number);
+}
+
+// ── Add Items Modal ──
+function openAddItemsModal(boxId){
+  const box=boxes[boxId]; if(!box)return;
+  const keepItems=decisionLog.filter(e=>e.category==='keep');
+  const assignedToThisBox=new Set(box.itemIds||[]);
+  const assignedElsewhere=new Set(
+    Object.values(boxes).filter(b=>b.id!==boxId).flatMap(b=>b.itemIds||[])
+  );
+
+  const backdrop=document.createElement('div');
+  backdrop.className='edit-modal-backdrop';
+  backdrop.id='add-items-backdrop';
+  backdrop.onclick=ev=>{if(ev.target===backdrop)backdrop.remove();};
+
+  const itemRows=keepItems.map(e=>{
+    const inThisBox=assignedToThisBox.has(e.id);
+    const elsewhere=assignedElsewhere.has(e.id);
+    const otherBox=elsewhere?Object.values(boxes).find(b=>b.id!==boxId&&(b.itemIds||[]).includes(e.id)):null;
+    return `<div style="display:flex;align-items:center;gap:0.65rem;padding:0.55rem 0;border-bottom:1px solid var(--border);">
+      <input type="checkbox" id="ai-${e.id}" ${inThisBox?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
+      <label for="ai-${e.id}" style="flex:1;font-size:0.82rem;cursor:pointer;">
+        ${escH(e.catIcon)} ${escH(e.name)}
+        <span style="font-size:0.68rem;color:var(--muted);display:block;">×${escH(e.qty)}${elsewhere?' · in Box #'+otherBox.number:''}${e.value?' · $'+parseFloat(e.value).toFixed(2):''}</span>
+      </label>
+    </div>`;
+  }).join('');
+
+  backdrop.innerHTML=`<div class="edit-modal">
+    <div class="edit-modal-header">
+      <h3>Add Items — Box #${box.number}</h3>
+      <button class="edit-modal-close" onclick="document.getElementById('add-items-backdrop').remove()">✕</button>
+    </div>
+    <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.75rem;">Check items to include in this box. Items already in another box will be moved.</div>
+    <div style="max-height:55vh;overflow-y:auto;">${itemRows}</div>
+    <button class="edit-save-btn" style="margin-top:1rem" onclick="saveAddedItems('${boxId}')">Save</button>
+  </div>`;
+  document.body.appendChild(backdrop);
+}
+
+function saveAddedItems(boxId){
+  const box=boxes[boxId]; if(!box)return;
+  const keepItems=decisionLog.filter(e=>e.category==='keep');
+  const checked=keepItems.filter(e=>document.getElementById('ai-'+e.id)?.checked).map(e=>e.id);
+
+  // Remove these items from other boxes
+  checked.forEach(itemId=>{
+    Object.values(boxes).forEach(b=>{
+      if(b.id!==boxId) b.itemIds=(b.itemIds||[]).filter(id=>id!==itemId);
+    });
+  });
+
+  // Also remove unchecked items from this box
+  const unchecked=keepItems.filter(e=>!document.getElementById('ai-'+e.id)?.checked).map(e=>e.id);
+  unchecked.forEach(itemId=>{
+    boxes[boxId].itemIds=(boxes[boxId].itemIds||[]).filter(id=>id!==itemId);
+  });
+
+  // Add checked items
+  checked.forEach(itemId=>{
+    if(!(boxes[boxId].itemIds||[]).includes(itemId)) boxes[boxId].itemIds.push(itemId);
+  });
+
+  saveBoxes();
+  document.getElementById('add-items-backdrop').remove();
+  renderQR();
+  toast('Box updated');
+}
+
+// ── Room helpers ──
+function getRoomOptions(currentRoom){
+  const rooms=[...DEFAULT_ROOMS];
+  if(currentRoom&&!rooms.includes(currentRoom))rooms.push(currentRoom);
+  return `<option value="">— select room —</option>`+
+    rooms.map(r=>`<option value="${escH(r)}" ${r===currentRoom?'selected':''}>${escH(r)}</option>`).join('');
+}
+
+// ── Print ──
+function printPackingList(){
+  const keepItems=decisionLog.filter(e=>e.category==='keep');
+  const boxList=Object.values(boxes).sort((a,b)=>
+    String(a.number).localeCompare(String(b.number),undefined,{numeric:true}));
+
+  const blocksHTML=boxList.map(box=>{
+    const items=(box.itemIds||[]).map(id=>keepItems.find(e=>e.id===id)).filter(Boolean);
+    const totalVal=items.reduce((s,e)=>{const v=parseFloat((e.value||'').replace(/[^0-9.]/g,''));return s+(isNaN(v)?0:v*(parseInt(e.qty)||1));},0);
+    const rows=items.map((e,i)=>`<tr><td>${i+1}</td><td>${escH(e.catIcon)} ${escH(e.name)}</td><td style="text-align:center">${escH(e.qty)}</td><td>${e.value?'$'+parseFloat(e.value).toFixed(2):''}</td><td>${escH(e.origin||'')}</td></tr>`).join('');
+    return `<div class="print-box-block">
+      <div class="print-box-header">
+        <div>
+          <div class="print-box-num">BOX #${box.number}</div>
+          <div class="print-box-name">${box.name||''}</div>
+        </div>
+        <div class="print-room-badge">${box.room||'Room TBD'}</div>
+      </div>
+      <table class="print-item-table">
+        <thead><tr style="background:#f5f5f5"><td><strong>#</strong></td><td><strong>Item</strong></td><td style="text-align:center"><strong>Qty</strong></td><td><strong>Value</strong></td><td><strong>Origin</strong></td></tr></thead>
+        <tbody>${rows||'<tr><td colspan="5" style="color:#999;font-style:italic">Empty</td></tr>'}</tbody>
+        ${totalVal>0?`<tfoot><tr><td colspan="3"></td><td><strong>$${totalVal.toFixed(2)}</strong></td><td></td></tr></tfoot>`:''}
+      </table>
+    </div>`;
+  }).join('');
+
+  const assignedIds=new Set(Object.values(boxes).flatMap(b=>b.itemIds||[]));
+  const unassigned=keepItems.filter(e=>!assignedIds.has(e.id));
+  const unassignedHTML=unassigned.length?`<div class="print-box-block">
+    <div class="print-box-header"><div class="print-box-name" style="color:#c0392b;">⚠ Unassigned Items (${unassigned.length})</div></div>
+    <table class="print-item-table"><tbody>${unassigned.map((e,i)=>`<tr><td>${i+1}</td><td>${escH(e.catIcon)} ${escH(e.name)}</td><td>${escH(e.qty)}</td><td></td><td></td></tr>`).join('')}</tbody></table>
+  </div>`:'';
+
+  const sheet=document.createElement('div');
+  sheet.className='qr-print-sheet';
+  sheet.innerHTML=`
+    <div style="text-align:center;margin-bottom:16pt;">
+      <div style="font-size:14pt;font-weight:700;font-family:Georgia,serif;">Honduras Relocation — Packing Master List</div>
+      <div style="font-size:9pt;color:#666;margin-top:4pt;">Valle de Ángeles, Honduras · ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})} · ${boxList.length} boxes · ${keepItems.length} items</div>
+      <hr style="border:none;border-top:1pt solid #ccc;margin:8pt 0;">
+      <div style="font-size:8pt;color:#999;font-style:italic;">Please place each box in the room indicated on the label. Gracias / Thank you.</div>
+    </div>
+    ${blocksHTML}${unassignedHTML}`;
+  document.body.appendChild(sheet);
+  window.print();
+  setTimeout(()=>sheet.remove(),1500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════════════════════════
+const SYNC_LS='hn_script_url_v5';
+
+function getSyncURL(){return localStorage.getItem(SYNC_LS)||'';}
+
+function promptScriptURL(){
+  const current=getSyncURL();
+  const url=prompt('Paste your Google Apps Script Web App URL:\n(From the setup guide — starts with https://script.google.com/...)',current||'');
+  if(url===null)return;
+  if(!url.trim()){toast('⚠️ URL not saved — empty');return;}
+  if(!url.startsWith('https://script.google.com/')){toast('⚠️ URL must start with https://script.google.com/');return;}
+  localStorage.setItem(SYNC_LS,url.trim());
+  toast('✓ Script URL saved');
+  renderSettings();
+}
+
+function clearScriptURL(){
+  if(!confirm('Remove the Google Sheets sync URL?'))return;
+  localStorage.removeItem(SYNC_LS);
+  toast('Sync URL removed');
+  renderSettings();
+}
+
+async function syncPush(){
+  const url=getSyncURL();
+  if(!url){toast('⚠️ No script URL set — go to Settings > Google Sheets Sync');return;}
+  if(!decisionLog.length){toast('No items to push');return;}
+  toast('Pushing to Google Sheets…');
+  try{
+    // Strip base64 photos before sending — too large for Apps Script
+    const payload=decisionLog.map(e=>({...e,photo:e.photo?'[photo]':''}));
+    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'push',items:payload}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok')toast(`✓ Pushed ${json.count} item${json.count!==1?'s':''} to Sheet`);
+    else toast('⚠️ Sheet error: '+(json.message||'unknown'));
+  }catch(err){toast('⚠️ Push failed — check URL and connection');}
+}
+
+async function syncPull(){
+  const url=getSyncURL();
+  if(!url){toast('⚠️ No script URL set — go to Settings > Google Sheets Sync');return;}
+  toast('Pulling from Google Sheets…');
+  try{
+    const res=await fetch(url+'?action=pull');
+    const json=await res.json();
+    if(json.status==='ok'&&Array.isArray(json.items)){
+      const existing=new Set(decisionLog.map(x=>x.id));
+      const merged=json.items.filter(x=>x.id&&!existing.has(x.id));
+      decisionLog=[...decisionLog,...merged];
+      saveLog(); renderSettings();
+      toast(`✓ Pulled ${merged.length} new item${merged.length!==1?'s':''} from Sheet`);
+    }else toast('⚠️ Pull failed: '+(json.message||'no items returned'));
+  }catch(err){toast('⚠️ Pull failed — check URL and connection');}
+}
+
+function renderSettings(){
+  const counts={keep:0,sell:0,give:0,donate:0,toss:0};
+  decisionLog.forEach(e=>{if(counts[e.category]!==undefined)counts[e.category]++;});
+  const grid=document.getElementById('stat-grid');
+  grid.innerHTML=Object.entries(counts).map(([c,n])=>`<div class="stat-card s-${c}"><div class="stat-num">${n}</div><div class="stat-lbl">${c}</div></div>`).join('');
+  document.getElementById('storage-count').textContent=decisionLog.length+' item'+(decisionLog.length!==1?'s':'')+' saved to this device';
+  // Show/hide sync URL row
+  const syncURL=getSyncURL();
+  const row=document.getElementById('sync-url-row');
+  const display=document.getElementById('sync-url-display');
+  if(syncURL&&row&&display){
+    row.style.display='flex';
+    display.textContent=syncURL.length>48?syncURL.slice(0,45)+'…':syncURL;
+  } else if(row){row.style.display='none';}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORTS & IMPORTS
+// ═══════════════════════════════════════════════════════════
+function exportJSON(){
+  const payload={exported:new Date().toISOString(),version:5,count:decisionLog.length,items:decisionLog};
+  dl(JSON.stringify(payload,null,2),'application/json','Honduras_Manifest_Backup.json');
+  toast('✓ JSON backup downloaded');
+}
+
+function importJSON(event){
+  const file=event.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const incoming=data.items||data;
+      if(!Array.isArray(incoming))throw new Error('Invalid format');
+      const existing=new Set(decisionLog.map(x=>x.id));
+      const merged=incoming.filter(x=>!existing.has(x.id));
+      decisionLog=[...decisionLog,...merged];
+      saveLog(); renderSettings();
+      toast(`✓ Imported ${merged.length} new item${merged.length!==1?'s':''}`);
+    }catch(err){toast('⚠️ Invalid JSON file');}
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+function exportCSV(filterKeep){
+  const items=filterKeep?decisionLog.filter(e=>e.category==='keep'):decisionLog;
+  if(!items.length){toast('No items to export');return;}
+  const hdr=['#','Item Description','Category','Quantity','Est. Value (USD)','Country of Origin','Disposition','Notes','Date'];
+  const rows=items.map((e,i)=>[i+1,e.name,e.catName,e.qty,e.value||'',e.origin,OC_LABELS[e.category]||e.category,e.notes||'',e.date]);
+  const csv=[hdr,...rows].map(r=>r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  dl(csv,'text/csv',filterKeep?'Honduras_Ship_Manifest.csv':'Honduras_Full_Log.csv');
+  toast('✓ CSV downloaded');
+}
+function exportCSVAll(){exportCSV(false);}
+
+function exportPrint(){window.print();}
+
+function clearAllData(){
+  if(!decisionLog.length){toast('No data to clear');return;}
+  if(confirm(`Delete all ${decisionLog.length} logged items? This cannot be undone.\n\nConsider exporting a JSON backup first.`)){
+    decisionLog=[];saveLog();renderSettings();toast('All data cleared');
+  }
+}
+
+function dl(content,type,filename){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+render('__category_select');
+</script>
+</body>
+</html>
