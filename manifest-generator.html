@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Honduras Manifest Generator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Mono:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1912;--surface:#162218;--card:#1c2b1f;--border:#2a3d2e;
+  --text:#e8ede9;--muted:#7a9e82;--accent:#5aaa72;--shadow:rgba(0,0,0,0.4);
+  --navy:#1a3a5c;--gold:#c8a84b;
+}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem 1rem 4rem;}
+.wrap{max-width:680px;margin:0 auto;}
+header{text-align:center;margin-bottom:2.5rem;}
+header h1{font-family:'Lora',serif;font-size:clamp(1.5rem,5vw,2.2rem);font-weight:600;line-height:1.2;}
+header p{font-size:0.72rem;color:var(--muted);margin-top:0.4rem;letter-spacing:0.05em;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.75rem;margin-bottom:1.25rem;box-shadow:0 6px 24px var(--shadow);}
+.card-title{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
+
+/* Steps */
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#0f1912;font-size:0.65rem;font-weight:500;margin-right:0.5rem;flex-shrink:0;}
+.step-title{font-size:0.85rem;font-weight:500;display:flex;align-items:center;margin-bottom:0.75rem;}
+
+/* Form fields */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;}
+.form-grid .full{grid-column:1/-1;}
+.field label{display:block;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem;}
+.field input,.field select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.65rem;font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text);outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
+.field input::placeholder{color:var(--muted);opacity:0.5;}
+.field input:focus{border-color:var(--accent);}
+
+/* Drop zone */
+.drop-zone{border:2px dashed var(--border);border-radius:10px;padding:2rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--card);}
+.drop-zone .drop-icon{font-size:2rem;margin-bottom:0.5rem;display:block;}
+.drop-zone p{font-size:0.78rem;color:var(--muted);}
+.drop-zone p strong{color:var(--accent);}
+.drop-zone input[type=file]{display:none;}
+.file-loaded{border-color:var(--accent);background:var(--card);}
+.file-loaded p{color:var(--accent);}
+
+/* Stats */
+.stats-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem;}
+.stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:0.25rem 0.75rem;font-size:0.68rem;color:var(--muted);}
+.stat-pill strong{color:var(--text);}
+
+/* Generate buttons */
+.btn-row{display:flex;gap:0.75rem;flex-wrap:wrap;}
+.gen-btn{flex:1;min-width:140px;padding:0.85rem 1rem;border-radius:10px;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:0.8rem;font-weight:500;letter-spacing:0.04em;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;}
+.gen-btn:disabled{opacity:0.3;cursor:not-allowed;}
+.btn-pdf{background:var(--navy);color:#fff;}
+.btn-pdf:not(:disabled):hover{background:#1e4a7a;}
+.btn-docx{background:#1a5c38;color:#fff;}
+.btn-docx:not(:disabled):hover{background:#226b44;}
+.btn-both{background:var(--gold);color:#1a1a2e;}
+.btn-both:not(:disabled):hover{filter:brightness(1.1);}
+
+/* Status */
+.status-box{padding:0.75rem 1rem;border-radius:8px;font-size:0.75rem;line-height:1.5;display:none;}
+.status-box.show{display:block;}
+.status-info{background:#162238;border:1px solid #2a4a6e;color:#8ab4d8;}
+.status-ok{background:#162318;border:1px solid #2a5c38;color:var(--accent);}
+.status-err{background:#2a1215;border:1px solid #6e2a2e;color:#e08080;}
+
+/* Preview table */
+.preview-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);margin-top:0.75rem;}
+.preview-table{width:100%;border-collapse:collapse;font-size:0.68rem;}
+.preview-table th{background:var(--surface);padding:0.4rem 0.6rem;text-align:left;font-size:0.58rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+.preview-table td{padding:0.45rem 0.6rem;border-bottom:1px solid var(--border);vertical-align:top;}
+.preview-table tr:last-child td{border-bottom:none;}
+.preview-table tr:hover td{background:var(--surface);}
+
+/* Instructions */
+.inst-list{list-style:none;display:flex;flex-direction:column;gap:0.5rem;}
+.inst-list li{font-size:0.75rem;line-height:1.5;display:flex;gap:0.5rem;color:var(--muted);}
+.inst-list li::before{content:'→';flex-shrink:0;color:var(--accent);}
+.inst-list li strong{color:var(--text);}
+
+.note{font-size:0.7rem;color:var(--muted);line-height:1.5;margin-top:0.75rem;padding:0.6rem 0.75rem;background:var(--surface);border-radius:6px;border-left:3px solid var(--accent);}
+
+/* Spinner */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:500px){
+  .form-grid{grid-template-columns:1fr;}
+  .form-grid .full{grid-column:1;}
+  .btn-row{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Manifest Generator</h1>
+  <p>Honduras Relocation · Valle de Ángeles · Generates PDF &amp; DOCX</p>
+</header>
+
+<!-- STEP 1: UPLOAD JSON -->
+<div class="card">
+  <div class="card-title"><span class="step-num">1</span> Load Your Decision Log</div>
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <span class="drop-icon">📂</span>
+    <p><strong>Tap to select</strong> your JSON backup file</p>
+    <p style="margin-top:0.3rem;font-size:0.68rem;">Export from the Decision Tree app → Data tab → Export Backup</p>
+    <input type="file" id="file-input" accept=".json" onchange="loadFile(this.files[0])">
+  </div>
+  <div class="stats-row" id="stats-row" style="display:none"></div>
+  <div class="preview-wrap" id="preview-wrap" style="display:none">
+    <table class="preview-table" id="preview-table"></table>
+  </div>
+</div>
+
+<!-- STEP 2: SHIPMENT DETAILS -->
+<div class="card">
+  <div class="card-title"><span class="step-num">2</span> Shipment Details</div>
+  <div class="form-grid">
+    <div class="field full">
+      <label>Owner Name / Nombre del Propietario</label>
+      <input type="text" id="f-name" placeholder="First Last" value="Greg">
+    </div>
+    <div class="field full">
+      <label>Origin Address / Dirección de Origen</label>
+      <input type="text" id="f-origin" placeholder="City, State, Country" value="Carpinteria, CA 93013, United States">
+    </div>
+    <div class="field full">
+      <label>Destination / Destino</label>
+      <input type="text" id="f-dest" value="Valle de Angeles, Francisco Morazan, Honduras">
+    </div>
+    <div class="field">
+      <label>Shipping Company</label>
+      <input type="text" id="f-shipper" placeholder="Company name">
+    </div>
+    <div class="field">
+      <label>Container Number</label>
+      <input type="text" id="f-container" placeholder="e.g. MSCU1234567">
+    </div>
+    <div class="field">
+      <label>Seal Number</label>
+      <input type="text" id="f-seal" placeholder="e.g. SL-98765">
+    </div>
+    <div class="field">
+      <label>Reference Number</label>
+      <input type="text" id="f-ref" placeholder="e.g. HN-2025-001" value="HN-2026-001">
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3: GENERATE -->
+<div class="card">
+  <div class="card-title"><span class="step-num">3</span> Generate Manifest</div>
+  <div class="btn-row">
+    <button class="gen-btn btn-pdf" id="btn-pdf" onclick="generate('pdf')" disabled>
+      <span>📄</span> PDF Manifest
+    </button>
+    <button class="gen-btn btn-docx" id="btn-docx" onclick="generate('docx')" disabled>
+      <span>📝</span> Word DOCX
+    </button>
+    <button class="gen-btn btn-both" id="btn-both" onclick="generate('both')" disabled>
+      <span>⬇</span> Download Both
+    </button>
+  </div>
+  <div class="status-box status-info" id="status-box">Loading…</div>
+  <div class="note">
+    <strong>PDF</strong> — print-ready, locked layout, for customs submission.<br>
+    <strong>DOCX</strong> — editable in Microsoft Word, for the shipping company or your own records.<br>
+    Both include all "Keep" items only, grouped by category with subtotals.
+  </div>
+</div>
+
+<!-- HOW TO USE -->
+<div class="card">
+  <div class="card-title">How to use this page</div>
+  <ul class="inst-list">
+    <li><strong>1.</strong> Open the Decision Tree app and evaluate all your items.</li>
+    <li><strong>2.</strong> Go to the <strong>Data tab</strong> in the Decision Tree → tap <strong>Export Backup (JSON)</strong>.</li>
+    <li><strong>3.</strong> Come back here and load that JSON file in Step 1 above.</li>
+    <li><strong>4.</strong> Fill in your shipment details in Step 2.</li>
+    <li><strong>5.</strong> Download your PDF for customs and DOCX for the shipping company.</li>
+    <li><strong>Update anytime</strong> — re-export JSON from the app as you add more items, re-upload here, and regenerate the manifest.</li>
+  </ul>
+</div>
+
+</div><!-- /wrap -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+
+<script>
+'use strict';
+
+// ── STATE ────────────────────────────────────────────────
+let loadedItems = [];
+let keepItems = [];
+
+// ── DRAG & DROP ──────────────────────────────────────────
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+
+function loadFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      loadedItems = (data.items ?? data);
+      keepItems = loadedItems.filter(i => i.category === 'keep');
+      showPreview();
+      enableButtons(true);
+      dz.classList.add('file-loaded');
+      dz.querySelector('p').innerHTML = `<strong>✓ ${file.name}</strong> loaded — ${keepItems.length} items to ship`;
+    } catch(err) {
+      showStatus('error', '⚠️ Invalid JSON file. Export from the Decision Tree app → Data tab → Export Backup.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showPreview() {
+  const sr = document.getElementById('stats-row');
+  const counts = {};
+  keepItems.forEach(i => { const k = i.catKey||'other'; counts[k]=(counts[k]||0)+1; });
+  const totalVal = keepItems.reduce((s,i) => {
+    const v = parseFloat((i.value||'').replace(/[^0-9.]/g,''));
+    return s + (isNaN(v)?0:v*(parseInt(i.qty)||1));
+  }, 0);
+  sr.innerHTML = `
+    <div class="stat-pill">🧳 <strong>${keepItems.length}</strong> items to ship</div>
+    <div class="stat-pill">💰 Declared: <strong>$${totalVal.toFixed(2)}</strong></div>
+    <div class="stat-pill">📦 <strong>${Object.keys(counts).length}</strong> categories</div>
+  `;
+  sr.style.display = 'flex';
+
+  const pw = document.getElementById('preview-wrap');
+  const pt = document.getElementById('preview-table');
+  const rows = keepItems.slice(0,8).map((i,idx) => {
+    const qty = parseInt(i.qty)||1;
+    const v = parseFloat((i.value||'').replace(/[^0-9.]/g,''));
+    const total = isNaN(v) ? '—' : `$${(v*qty).toFixed(2)}`;
+    return `<tr><td>${idx+1}</td><td><strong>${esc(i.name)}</strong></td><td>${esc(i.catIcon||'')} ${esc(i.catName||'')}</td><td style="text-align:center">${qty}</td><td style="text-align:right">${total}</td></tr>`;
+  }).join('');
+  const more = keepItems.length > 8 ? `<tr><td colspan="5" style="text-align:center;color:var(--muted);font-style:italic">… and ${keepItems.length-8} more items</td></tr>` : '';
+  pt.innerHTML = `<thead><tr><th>#</th><th>Item</th><th>Category</th><th>Qty</th><th>Value</th></tr></thead><tbody>${rows}${more}</tbody>`;
+  pw.style.display = 'block';
+}
+
+function enableButtons(on) {
+  ['btn-pdf','btn-docx','btn-both'].forEach(id => document.getElementById(id).disabled = !on);
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById('status-box');
+  el.className = `status-box show ${type==='ok'?'status-ok':type==='error'?'status-err':'status-info'}`;
+  el.innerHTML = msg;
+}
+
+function getOwnerInfo() {
+  return {
+    name:           document.getElementById('f-name').value.trim() || 'Owner',
+    origin_address: document.getElementById('f-origin').value.trim(),
+    destination:    document.getElementById('f-dest').value.trim(),
+    shipping_co:    document.getElementById('f-shipper').value.trim() || '[Shipping Company]',
+    container_no:   document.getElementById('f-container').value.trim() || '[Container #]',
+    seal_no:        document.getElementById('f-seal').value.trim() || '[Seal #]',
+    ref:            document.getElementById('f-ref').value.trim() || 'HN-2026-001',
+  };
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── CATEGORY DATA ────────────────────────────────────────
+const CAT_ORDER = ['tools','kitchen','clothing','electronics','furniture','books','other'];
+const CAT_LABELS = {
+  tools:       'Tools & Power Equipment / Herramientas y Equipos',
+  kitchen:     'Cookware, Dishes & Kitchen / Utensilios de Cocina',
+  clothing:    'Clothing & Linens / Ropa y Ropa de Cama',
+  electronics: 'Electronics & Cameras / Electronicos y Camaras',
+  furniture:   'Furniture & Large Items / Muebles y Articulos Grandes',
+  books:       'Books, Media & Office / Libros, Medios y Oficina',
+  other:       'Other / Otros',
+};
+const CAT_FILL = {
+  tools:'e8f4ec',kitchen:'fff8e6',clothing:'f0eeff',
+  electronics:'e6f0ff',furniture:'fff0e8',books:'f0fff4',other:'f5f5f5'
+};
+
+function groupItems() {
+  const grouped = {};
+  for (const item of keepItems) {
+    const k = item.catKey || 'other';
+    (grouped[k] = grouped[k] || []).push(item);
+  }
+  return grouped;
+}
+
+// ── PDF GENERATION ───────────────────────────────────────
+function generatePDF(owner) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'letter' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const ML = 36, MR = 36, MT = 36;
+  const CW = W - ML - MR;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const grouped = groupItems();
+
+  let grandTotal = 0;
+  const catSubtotals = {};
+  const catQtys = {};
+
+  // Header banner (drawn on each page via didDrawPage)
+  function drawPageHeader(data) {
+    doc.setFillColor(26,58,92);
+    doc.rect(0, 0, W, 36, 'F');
+    doc.setFillColor(200,168,75);
+    doc.rect(0, 36, W, 2, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text('HONDURAS RELOCATION — SHIPPING MANIFEST', ML, 23);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.setTextColor(168,192,216);
+    doc.text('LISTA DE BIENES — TRASLADO INTERNACIONAL DE RESIDENCIA', ML, 32);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setTextColor(200,168,75);
+    doc.text(`Page ${data.pageNumber}`, W - MR, 23, {align:'right'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.setTextColor(168,192,216);
+    doc.text(owner.ref, W - MR, 32, {align:'right'});
+  }
+
+  function drawPageFooter() {
+    doc.setFillColor(240,244,248);
+    doc.rect(0, H - 26, W, 26, 'F');
+    doc.setDrawColor(184,204,224);
+    doc.line(0, H-26, W, H-26);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
+    doc.setTextColor(107,114,128);
+    doc.text(`Generated: ${dateStr}  |  Owner: ${owner.name}  |  Destination: ${owner.destination}`, ML, H-9);
+    doc.text('Direccion General de Aduanas de Honduras — Menaje de Casa', W-MR, H-9, {align:'right'});
+  }
+
+  // Info block
+  const infoY = 52;
+  doc.autoTable({
+    startY: infoY, margin:{left:ML,right:MR},
+    head:[],
+    body:[
+      ['Owner / Propietario', owner.name, 'Date / Fecha', dateStr],
+      ['Origin Address', owner.origin_address, 'Reference No.', owner.ref],
+      ['Destination / Destino', owner.destination, 'Shipping Co.', owner.shipping_co],
+      ['Container No.', owner.container_no, 'Seal No.', owner.seal_no],
+    ],
+    columnStyles:{
+      0:{fontStyle:'bold',fillColor:[220,230,240],textColor:[26,58,92],cellWidth:100},
+      1:{cellWidth:165},
+      2:{fontStyle:'bold',fillColor:[220,230,240],textColor:[26,58,92],cellWidth:90},
+      3:{cellWidth:180},
+    },
+    styles:{fontSize:7.5,cellPadding:4,lineColor:[184,204,224],lineWidth:0.3},
+    didDrawPage: data => { drawPageHeader(data); drawPageFooter(); },
+    theme:'grid',
+  });
+
+  // Customs note
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 8,
+    margin:{left:ML,right:MR},
+    head:[[{content:'CUSTOMS DECLARATION / DECLARACIÓN ADUANERA',colSpan:1}]],
+    body:[[
+      'The undersigned declares that the items listed herein constitute personal household goods and personal effects being imported for personal use in connection with a permanent change of residence to Honduras, in accordance with Article 82 of the Honduran Customs Law (Ley Aduanera de Honduras) — Menaje de Casa.'
+    ]],
+    headStyles:{fillColor:[26,58,92],textColor:255,fontSize:7.5,fontStyle:'bold'},
+    bodyStyles:{fontSize:7,fillColor:[232,240,251],textColor:[26,26,46]},
+    styles:{cellPadding:5,lineColor:[26,58,92],lineWidth:0.5},
+    theme:'grid',
+  });
+
+  // Items by category
+  let rowNum = 0;
+  for (const catKey of CAT_ORDER) {
+    if (!grouped[catKey]) continue;
+    const catItems = grouped[catKey];
+    const fillHex = CAT_FILL[catKey] || 'f5f5f5';
+    const fillRgb = [parseInt(fillHex.slice(0,2),16),parseInt(fillHex.slice(2,4),16),parseInt(fillHex.slice(4,6),16)];
+
+    let catTotal = 0, catQty = 0;
+    const body = [];
+    for (const item of catItems) {
+      rowNum++;
+      const qty = parseInt(item.qty||1)||1;
+      const v = parseFloat((item.value||'').replace(/[^0-9.]/g,''));
+      let unitStr='—',totalStr='—',itemTotal=0;
+      if (!isNaN(v)){itemTotal=v*qty;catTotal+=itemTotal;unitStr=`$${v.toFixed(2)}`;totalStr=`$${itemTotal.toFixed(2)}`;}
+      catQty+=qty;
+      const notes = item.notes||'';
+      body.push([
+        String(rowNum),
+        notes ? `${item.name}\n${notes}` : item.name,
+        String(qty), unitStr, totalStr,
+        item.origin||'United States'
+      ]);
+    }
+    grandTotal += catTotal;
+    catSubtotals[catKey] = catTotal;
+    catQtys[catKey] = catQty;
+
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 8,
+      margin:{left:ML,right:MR},
+      head:[
+        [{content: CAT_LABELS[catKey]||catKey, colSpan:6, styles:{fillColor:fillRgb,textColor:[26,58,92],fontStyle:'bold',fontSize:7.5}}],
+        ['#','Item Description / Descripción del Artículo','Qty','Unit Value (USD)','Total Value (USD)','Origin / Origen'],
+      ],
+      body,
+      foot:[[
+        '','',
+        {content:String(catQty),styles:{fontStyle:'bold'}},
+        {content:'Subtotal:',styles:{fontStyle:'bold',halign:'right'}},
+        {content:`$${catTotal.toFixed(2)}`,styles:{fontStyle:'bold',textColor:[26,92,56]}},
+        ''
+      ]],
+      headStyles:[
+        {}, // cat header
+        {fillColor:[26,58,92],textColor:255,fontSize:7,fontStyle:'bold',halign:'center'},
+      ],
+      columnStyles:{
+        0:{cellWidth:22,halign:'center'},
+        1:{cellWidth:195},
+        2:{cellWidth:28,halign:'center'},
+        3:{cellWidth:68,halign:'right'},
+        4:{cellWidth:68,halign:'right'},
+        5:{cellWidth:68,halign:'center'},
+      },
+      footStyles:{fillColor:[220,230,240],textColor:[26,58,92],lineColor:[26,58,92],lineWidth:0.5},
+      styles:{fontSize:7.5,cellPadding:3.5,lineColor:[184,204,224],lineWidth:0.25,overflow:'linebreak'},
+      alternateRowStyles:{fillColor:[248,250,252]},
+      theme:'grid',
+      didDrawPage: data => { drawPageHeader(data); drawPageFooter(); },
+    });
+  }
+
+  // Grand total
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 6,
+    margin:{left:ML,right:MR},
+    body:[[
+      {content:'TOTAL DECLARED VALUE / VALOR TOTAL DECLARADO', styles:{halign:'right',fontStyle:'bold',textColor:255,fillColor:[26,58,92]}},
+      {content:`$${grandTotal.toFixed(2)} USD`, styles:{halign:'right',fontStyle:'bold',textColor:[200,168,75],fillColor:[26,58,92]}},
+    ]],
+    columnStyles:{0:{cellWidth:448},1:{cellWidth:CW-448}},
+    styles:{fontSize:9,cellPadding:6,lineColor:[26,58,92],lineWidth:0},
+    theme:'plain',
+    didDrawPage: data => { drawPageHeader(data); drawPageFooter(); },
+  });
+
+  // Summary
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 16,
+    margin:{left:ML,right:MR},
+    head:[['Category / Categoría','Items','Total Value (USD)']],
+    body: CAT_ORDER.filter(k=>grouped[k]).map(k=>[
+      CAT_LABELS[k]||k, String(catQtys[k]||0), `$${(catSubtotals[k]||0).toFixed(2)}`
+    ]),
+    foot:[['TOTAL', String(keepItems.reduce((s,i)=>s+(parseInt(i.qty)||1),0)), `$${grandTotal.toFixed(2)}`]],
+    headStyles:{fillColor:[26,58,92],textColor:255,fontSize:7.5,fontStyle:'bold'},
+    columnStyles:{0:{cellWidth:350},1:{cellWidth:60,halign:'center'},2:{cellWidth:130,halign:'right'}},
+    footStyles:{fillColor:[220,230,240],textColor:[26,58,92],fontStyle:'bold',lineColor:[26,58,92],lineWidth:0.75},
+    alternateRowStyles:{fillColor:[240,244,248]},
+    styles:{fontSize:7.5,cellPadding:4,lineColor:[184,204,224],lineWidth:0.25},
+    theme:'grid',
+    didDrawPage: data => { drawPageHeader(data); drawPageFooter(); },
+  });
+
+  // Declaration
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 16,
+    margin:{left:ML,right:MR},
+    head:[['DECLARATION / DECLARACIÓN JURADA']],
+    body:[[
+      'I, the undersigned, hereby declare under penalty of perjury that the foregoing inventory is a true and complete list of all household goods and personal effects being shipped, that all items are for personal use only and not for resale, and that the declared values represent fair market value to the best of my knowledge.\n\nYo, el abajo firmante, declaro bajo pena de perjurio que el inventario anterior es una lista verdadera y completa de todos los bienes del hogar y efectos personales que se envían, que todos los artículos son únicamente para uso personal y no para reventa, y que los valores declarados representan el valor justo de mercado según mi leal saber y entender.'
+    ]],
+    headStyles:{fillColor:[26,58,92],textColor:255,fontSize:8,fontStyle:'bold'},
+    bodyStyles:{fontSize:7.5,textColor:[26,26,46],fillColor:255},
+    styles:{cellPadding:6,lineColor:[184,204,224],lineWidth:0.25},
+    theme:'grid',
+    didDrawPage: data => { drawPageHeader(data); drawPageFooter(); },
+  });
+
+  // Signature lines
+  const sy = doc.lastAutoTable.finalY + 28;
+  if (sy > H - 100) { doc.addPage(); drawPageHeader({pageNumber: doc.internal.getNumberOfPages()}); drawPageFooter(); }
+  doc.setDrawColor(26,58,92); doc.setLineWidth(0.75);
+  const sigY = Math.min(sy, H-80);
+  doc.line(ML, sigY, ML+220, sigY);
+  doc.line(ML+260, sigY, ML+400, sigY);
+  doc.line(ML+440, sigY, W-MR, sigY);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(107,114,128);
+  doc.text('Signature / Firma del Propietario', ML, sigY+10);
+  doc.text('Date / Fecha', ML+260, sigY+10);
+  doc.text('Customs Stamp / Sello Aduanero', ML+440, sigY+10);
+
+  return doc;
+}
+
+// ── DOCX GENERATION ──────────────────────────────────────
+async function generateDOCX(owner) {
+  const {
+    Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    AlignmentType, WidthType, BorderStyle, ShadingType, VerticalAlign,
+    PageNumber, Header, Footer, UnderlineType
+  } = docx;
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const grouped = groupItems();
+
+  const NAVY='1A3A5C', GOLD='C8A84B', LIGHT='F0F4F8', MID='DCE6F0';
+  const WHITE='FFFFFF', GRAY='6B7280', GREEN='1A5C38', DARK='1A1A2E', BORDER_C='B8CCE0';
+  const TW = 8360;
+  const CW = [360, 3600, 560, 1160, 1160, 1160];
+
+  const b = (c=BORDER_C,sz=4) => ({style:BorderStyle.SINGLE,size:sz,color:c});
+  const nb = () => ({style:BorderStyle.NONE,size:0,color:WHITE});
+  const ab = (c=BORDER_C,sz=4) => ({top:b(c,sz),bottom:b(c,sz),left:b(c,sz),right:b(c,sz)});
+  const nob = () => ({top:nb(),bottom:nb(),left:nb(),right:nb()});
+
+  function tc(children, {bg=null,bold=false,size=16,color=DARK,align=AlignmentType.LEFT,w=1000,colSpan=1,borders=null}={}) {
+    const paras = Array.isArray(children)?children:[new Paragraph({alignment:align,children:[new TextRun({text:String(children??''),bold,size,color,font:'Arial'})]})];
+    return new TableCell({children:paras,columnSpan:colSpan,verticalAlign:VerticalAlign.TOP,
+      width:{size:w,type:WidthType.DXA},margins:{top:55,bottom:55,left:75,right:75},
+      shading:bg?{fill:bg,type:ShadingType.CLEAR}:undefined,borders:borders??ab()});
+  }
+  function hc(text,w) {
+    return new TableCell({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text,bold:true,size:13,color:WHITE,font:'Arial'})]})],
+      width:{size:w,type:WidthType.DXA},margins:{top:65,bottom:65,left:75,right:75},
+      shading:{fill:NAVY,type:ShadingType.CLEAR},borders:ab(NAVY,4),verticalAlign:VerticalAlign.CENTER});
+  }
+  function p(text,{bold=false,size=16,color=DARK,align=AlignmentType.LEFT,italic=false,sb=0,sa=0}={}) {
+    return new Paragraph({alignment:align,spacing:{before:sb,after:sa},
+      children:[new TextRun({text,bold,size,color,italic,font:'Arial'})]});
+  }
+
+  const children = [];
+
+  // Title
+  children.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:[TW],rows:[
+    new TableRow({children:[new TableCell({children:[
+      p('HONDURAS RELOCATION — SHIPPING MANIFEST',{bold:true,size:22,color:WHITE,align:AlignmentType.CENTER}),
+      p('LISTA DE BIENES — TRASLADO INTERNACIONAL DE RESIDENCIA',{size:15,color:'C8D8E8',align:AlignmentType.CENTER,italic:true}),
+      p('Direccion General de Aduanas de Honduras — Menaje de Casa',{size:13,color:GOLD,align:AlignmentType.CENTER}),
+    ],shading:{fill:NAVY,type:ShadingType.CLEAR},borders:nob(),margins:{top:130,bottom:110,left:100,right:100},width:{size:TW,type:WidthType.DXA}})]}),
+  ]}));
+  children.push(p('',{sa:80}));
+
+  // Info table
+  function infoRow(l,v,l2='',v2='') {
+    return new TableRow({children:[
+      tc(l,{bg:MID,bold:true,size:13,color:NAVY,w:1500}),
+      tc(v,{size:13,w:2580}),
+      tc(l2,{bg:MID,bold:true,size:13,color:NAVY,w:1300}),
+      tc(v2,{size:13,w:2980}),
+    ]});
+  }
+  children.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:[1500,2580,1300,2980],rows:[
+    infoRow('Owner / Propietario',owner.name,'Date / Fecha',dateStr),
+    infoRow('Origin Address',owner.origin_address,'Reference No.',owner.ref),
+    infoRow('Destination / Destino',owner.destination,'Shipping Co.',owner.shipping_co),
+    infoRow('Container No.',owner.container_no,'Seal No.',owner.seal_no),
+  ]}));
+  children.push(p('',{sa:90}));
+
+  // Customs note
+  children.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:[TW],rows:[
+    new TableRow({children:[new TableCell({children:[
+      p('CUSTOMS DECLARATION / DECLARACION ADUANERA',{bold:true,size:13,color:NAVY}),
+      p('The undersigned declares that the items listed herein constitute personal household goods and personal effects being imported for personal use in connection with a permanent change of residence to Honduras, in accordance with Article 82 of the Honduran Customs Law (Ley Aduanera de Honduras) — Menaje de Casa.',{size:13,color:DARK,sb:40}),
+    ],shading:{fill:'E8F0FB',type:ShadingType.CLEAR},borders:ab(NAVY,6),margins:{top:75,bottom:75,left:90,right:90},width:{size:TW,type:WidthType.DXA}})]}),
+  ]}));
+  children.push(p('',{sa:100}));
+
+  // Items
+  let rowNum=0, grandTotal=0;
+  const catSubtotals={}, catQtys={};
+
+  for (const catKey of CAT_ORDER) {
+    if (!grouped[catKey]) continue;
+    const catItems = grouped[catKey];
+    const catFill = CAT_FILL[catKey]||'F5F5F5';
+    const rows=[
+      new TableRow({tableHeader:true,children:CW.map((w,i)=>[
+        hc('#',CW[0]),hc('Item Description / Descripcion del Articulo',CW[1]),
+        hc('Qty',CW[2]),hc('Unit Value (USD)',CW[3]),hc('Total Value (USD)',CW[4]),hc('Origin',CW[5]),
+      ][i])}),
+      new TableRow({children:[
+        tc('',{bg:catFill,w:CW[0],borders:ab(BORDER_C,2)}),
+        new TableCell({children:[p(CAT_LABELS[catKey]||catKey,{bold:true,size:13,color:NAVY})],columnSpan:5,
+          shading:{fill:catFill,type:ShadingType.CLEAR},borders:ab(BORDER_C,2),
+          margins:{top:55,bottom:55,left:75,right:75},width:{size:CW.slice(1).reduce((a,b)=>a+b,0),type:WidthType.DXA}}),
+      ]}),
+    ];
+    let catTotal=0,catQty=0;
+    for (const item of catItems) {
+      rowNum++;
+      const qty=parseInt(item.qty||1)||1;
+      const v=parseFloat((item.value||'').replace(/[^0-9.]/g,''));
+      let us='—',ts='—',it=0;
+      if(!isNaN(v)){it=v*qty;catTotal+=it;us=`$${v.toFixed(2)}`;ts=`$${it.toFixed(2)}`;}
+      catQty+=qty;
+      const bg = rowNum%2===0?'F8FAFC':WHITE;
+      const notes=item.notes||'';
+      const descParas=[new Paragraph({children:[new TextRun({text:item.name||'',bold:true,size:14,color:DARK,font:'Arial'})]})];
+      if(notes)descParas.push(new Paragraph({children:[new TextRun({text:notes,size:12,color:GRAY,italic:true,font:'Arial'})]}));
+      rows.push(new TableRow({children:[
+        tc(String(rowNum),{bg,size:13,align:AlignmentType.CENTER,w:CW[0]}),
+        new TableCell({children:descParas,shading:{fill:bg,type:ShadingType.CLEAR},borders:ab(),margins:{top:55,bottom:55,left:75,right:75},width:{size:CW[1],type:WidthType.DXA}}),
+        tc(String(qty),{bg,size:13,align:AlignmentType.CENTER,w:CW[2]}),
+        tc(us,{bg,size:13,align:AlignmentType.RIGHT,w:CW[3]}),
+        tc(ts,{bg,size:13,align:AlignmentType.RIGHT,w:CW[4]}),
+        tc(item.origin||'United States',{bg,size:12,align:AlignmentType.CENTER,w:CW[5]}),
+      ]}));
+    }
+    grandTotal+=catTotal; catSubtotals[catKey]=catTotal; catQtys[catKey]=catQty;
+    rows.push(new TableRow({children:[
+      tc('',{bg:MID,w:CW[0],borders:ab(NAVY,6)}),
+      tc('',{bg:MID,w:CW[1],borders:ab(NAVY,6)}),
+      tc(String(catQty),{bg:MID,bold:true,size:13,align:AlignmentType.CENTER,w:CW[2],borders:ab(NAVY,6)}),
+      tc('Subtotal:',{bg:MID,bold:true,size:13,color:NAVY,align:AlignmentType.RIGHT,w:CW[3],borders:ab(NAVY,6)}),
+      tc(`$${catTotal.toFixed(2)}`,{bg:MID,bold:true,size:13,color:GREEN,align:AlignmentType.RIGHT,w:CW[4],borders:ab(NAVY,6)}),
+      tc('',{bg:MID,w:CW[5],borders:ab(NAVY,6)}),
+    ]}));
+    children.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:CW,rows}));
+    children.push(p('',{sa:100}));
+  }
+
+  // Grand total
+  children.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:[2200,4460,1700],rows:[
+    new TableRow({children:[
+      tc('',{bg:NAVY,borders:nob(),w:2200}),
+      tc('TOTAL DECLARED VALUE / VALOR TOTAL DECLARADO',{bg:NAVY,bold:true,size:16,color:WHITE,align:AlignmentType.RIGHT,borders:nob(),w:4460}),
+      tc(`$${grandTotal.toFixed(2)} USD`,{bg:NAVY,bold:true,size:16,color:GOLD,align:AlignmentType.RIGHT,borders:nob(),w:1700}),
+    ]}),
+  ]}));
+  children.push(p('',{sa:130}));
+
+  // Summary
+  children.push(p('SUMMARY BY CATEGORY / RESUMEN POR CATEGORIA',{bold:true,size:15,color:NAVY,sa:60}));
+  const sumRows=[
+    new TableRow({children:[hc('Category / Categoria',5200),hc('Items',800),hc('Total Value (USD)',2360)]}),
+  ];
+  for (const k of CAT_ORDER) {
+    if(!grouped[k]) continue;
+    const alt=sumRows.length%2===0;
+    sumRows.push(new TableRow({children:[
+      tc(CAT_LABELS[k]||k,{bg:alt?LIGHT:WHITE,size:13,w:5200}),
+      tc(String(catQtys[k]||0),{bg:alt?LIGHT:WHITE,size:13,align:AlignmentType.CENTER,w:800}),
+      tc(`$${(catSubtotals[k]||0).toFixed(2)}`,{bg:alt?LIGHT:WHITE,size:13,align:AlignmentType.RIGHT,w:2360}),
+    ]}));
+  }
+  const totItems=keepItems.reduce((s,i)=>s+(parseInt(i.qty)||1),0);
+  sumRows.push(new TableRow({children:[
+    tc('TOTAL',{bg:MID,bold:true,size:15,color:NAVY,w:5200,borders:ab(NAVY,6)}),
+    tc(String(totItems),{bg:MID,bold:true,size:15,color:NAVY,align:AlignmentType.CENTER,w:800,borders:ab(NAVY,6)}),
+    tc(`$${grandTotal.toFixed(2)}`,{bg:MID,bold:true,size:15,color:GREEN,align:AlignmentType.RIGHT,w:2360,borders:ab(NAVY,6)}),
+  ]}));
+  children.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:[5200,800,2360],rows:sumRows}));
+  children.push(p('',{sa:160}));
+
+  // Declaration
+  children.push(p('DECLARATION / DECLARACION JURADA',{bold:true,size:17,color:NAVY,sa:60}));
+  children.push(p('I, the undersigned, hereby declare under penalty of perjury that the foregoing inventory is a true and complete list of all household goods and personal effects being shipped, that all items are for personal use only and not for resale, and that the declared values represent fair market value to the best of my knowledge.',{size:13,color:DARK,sa:60}));
+  children.push(p('Yo, el abajo firmante, declaro bajo pena de perjurio que el inventario anterior es una lista verdadera y completa de todos los bienes del hogar y efectos personales que se envian, que todos los articulos son unicamente para uso personal y no para reventa, y que los valores declarados representan el valor justo de mercado segun mi leal saber y entender.',{size:13,color:DARK,italic:true,sa:180}));
+
+  // Signature
+  const sigBotB={style:BorderStyle.SINGLE,size:8,color:NAVY};
+  function sigC(label,w){return new TableCell({children:[p('',{}),p(label,{size:12,color:GRAY})],
+    borders:{top:nb(),left:nb(),right:nb(),bottom:sigBotB},width:{size:w,type:WidthType.DXA},margins:{top:180,bottom:35,left:0,right:0}});}
+  function gapC(w){return new TableCell({children:[p('')],borders:nob(),width:{size:w,type:WidthType.DXA}});}
+  children.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:[3600,300,2100,300,2060],rows:[
+    new TableRow({children:[
+      sigC('Signature / Firma del Propietario',3600),
+      gapC(300),
+      sigC('Date / Fecha',2100),
+      gapC(300),
+      sigC('Customs Stamp / Sello Aduanero',2060),
+    ]}),
+  ]}));
+
+  const doc2 = new Document({
+    styles:{default:{document:{run:{font:'Arial',size:16}}}},
+    sections:[{
+      properties:{page:{size:{width:12240,height:15840},margin:{top:900,right:800,bottom:900,left:800}}},
+      headers:{default:new Header({children:[new Table({width:{size:8640,type:WidthType.DXA},columnWidths:[6200,2440],rows:[
+        new TableRow({children:[
+          new TableCell({children:[p('Honduras Relocation Manifest / Lista de Bienes',{bold:true,size:15,color:NAVY})],
+            borders:{top:nb(),left:nb(),right:nb(),bottom:{style:BorderStyle.SINGLE,size:4,color:GOLD}},
+            width:{size:6200,type:WidthType.DXA},margins:{top:0,bottom:40,left:0,right:0}}),
+          new TableCell({children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[
+            new TextRun({text:'Page ',size:13,color:GRAY,font:'Arial'}),
+            new TextRun({children:[PageNumber.CURRENT],size:13,color:NAVY,bold:true,font:'Arial'}),
+            new TextRun({text:' of ',size:13,color:GRAY,font:'Arial'}),
+            new TextRun({children:[PageNumber.TOTAL_PAGES],size:13,color:NAVY,bold:true,font:'Arial'}),
+          ]})],borders:{top:nb(),left:nb(),right:nb(),bottom:{style:BorderStyle.SINGLE,size:4,color:GOLD}},
+          width:{size:2440,type:WidthType.DXA},margins:{top:0,bottom:40,left:0,right:0}}),
+        ]}),
+      ]})]})},
+      footers:{default:new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,
+        children:[new TextRun({text:`Generated: ${dateStr}  |  ${owner.name}  |  ${owner.destination}`,size:12,color:GRAY,font:'Arial'})]})]}),
+      },
+      children,
+    }],
+  });
+
+  return await Packer.toBuffer(doc2);
+}
+
+// ── GENERATE CONTROLLER ───────────────────────────────────
+async function generate(type) {
+  if (!keepItems.length) { showStatus('error','⚠️ No items loaded. Upload your JSON backup first.'); return; }
+  const owner = getOwnerInfo();
+  ['btn-pdf','btn-docx','btn-both'].forEach(id=>{
+    document.getElementById(id).disabled=true;
+    document.getElementById(id).innerHTML='<span class="spinner"></span>';
+  });
+  showStatus('info','<span class="spinner"></span> &nbsp;Generating your manifest…');
+
+  try {
+    if (type==='pdf'||type==='both') {
+      showStatus('info','<span class="spinner"></span> &nbsp;Building PDF…');
+      await new Promise(r=>setTimeout(r,50));
+      const pdf = generatePDF(owner);
+      pdf.save('Honduras_Shipping_Manifest.pdf');
+    }
+    if (type==='docx'||type==='both') {
+      showStatus('info','<span class="spinner"></span> &nbsp;Building DOCX…');
+      await new Promise(r=>setTimeout(r,50));
+      const buf = await generateDOCX(owner);
+      const blob = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download='Honduras_Shipping_Manifest.docx'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    }
+    showStatus('ok',`✓ Done! ${type==='both'?'PDF and DOCX downloaded':'File downloaded'}. Check your Downloads folder.`);
+  } catch(err) {
+    console.error(err);
+    showStatus('error','⚠️ Generation failed: '+err.message);
+  } finally {
+    enableButtons(true);
+    document.getElementById('btn-pdf').innerHTML='<span>📄</span> PDF Manifest';
+    document.getElementById('btn-docx').innerHTML='<span>📝</span> Word DOCX';
+    document.getElementById('btn-both').innerHTML='<span>⬇</span> Download Both';
+  }
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
